@@ -12,6 +12,9 @@ import {
     Book,
     Plus,
     GitFork,
+    LifeBuoy,
+    Send,
+    Settings,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -25,6 +28,7 @@ import {
 } from "@/components/ui/sidebar"
 import { AppSidebarHeader } from "@/components/app-sidebar-header"
 import { ScrollArea } from "./ui/scroll-area"
+import { NavSecondary } from "./nav-secondary"
 
 const data = {
     user: {
@@ -38,12 +42,12 @@ const data = {
     platform: [
         {
             title: "Dashboard",
-            url: "/administrator",
+            url: "/league-administrator",
             icon: LayoutDashboard,
         },
         {
             title: "Analytics",
-            url: "/administrator/pages/analytics",
+            url: "/league-administrator/pages/analytics",
             icon: ChartSpline,
         },
         {
@@ -90,7 +94,7 @@ const data = {
     league: [
         {
             title: "Create",
-            url: "/administrator",
+            url: "/league-administrator",
             icon: Plus,
         },
         {
@@ -115,6 +119,24 @@ const data = {
             ],
         }
     ],
+    navSecondary: [
+        {
+            title: "Settings",
+            url: "/league-administrator/pages/settings",
+            icon: Settings,
+        },
+        {
+            title: "Support",
+            url: "#",
+            icon: LifeBuoy,
+        },
+        {
+            title: "Feedback",
+            url: "#",
+            icon: Send,
+        },
+    ],
+
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -128,6 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarContent className="pb-4">
                     <NavMain label="Platform" items={data.platform} />
                     <NavMain label="League" items={data.league} />
+                    <NavSecondary items={data.navSecondary} className="mt-auto" />
                 </SidebarContent>
             </ScrollArea>
 

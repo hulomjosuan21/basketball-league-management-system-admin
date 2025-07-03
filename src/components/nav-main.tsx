@@ -73,10 +73,8 @@ export function NavMain({
                     ) : (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild tooltip={item.title}>
-                                <Link
-                                    href={item.url}
-                                    className="flex items-center gap-2 text-sidebar-foreground/70"
-                                >
+
+                                <Link href={item.url}>
                                     {item.icon ? <item.icon className="text-sidebar-foreground/70" /> : <MoreHorizontal className="text-sidebar-foreground/70" />}
                                     <span>{item.title}</span>
                                 </Link>

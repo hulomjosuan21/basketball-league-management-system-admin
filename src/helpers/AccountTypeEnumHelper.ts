@@ -3,18 +3,18 @@ import { AccountTypeEnum } from "@/enums/AccountTypeEnum";
 
 
 export function accountTypeFromValue(value?: string): AccountTypeEnum | undefined {
-    return Object.values(AccountTypeEnum).find(v => v === value);
+  return Object.values(AccountTypeEnum).find(v => v === value);
 }
 
 export function accountTypeFromName(name?: string): AccountTypeEnum | undefined {
-    if (!name) return undefined;
-    return (AccountTypeEnum as Record<string, AccountTypeEnum>)[name];
+  if (!name) return undefined;
+  return (AccountTypeEnum as Record<string, AccountTypeEnum>)[name];
 }
 
 export function accountTypeEqualsString(enumValue: AccountTypeEnum, input: string): boolean {
-    return enumValue === input ||
-        AccountTypeEnum[input as keyof typeof AccountTypeEnum] === enumValue ||
-        (enumValue as unknown as string) === input;
+  return enumValue === input ||
+    AccountTypeEnum[input as keyof typeof AccountTypeEnum] === enumValue ||
+    (enumValue as unknown as string) === input;
 }
 
 /*
