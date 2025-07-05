@@ -42,7 +42,7 @@ const data = {
     platform: [
         {
             title: "Dashboard",
-            url: "/league-administrator",
+            url: "/league-administrator/pages/dashboard",
             icon: LayoutDashboard,
         },
         {

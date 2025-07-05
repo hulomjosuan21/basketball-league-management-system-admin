@@ -1,0 +1,38 @@
+[
+  {
+    "team_id": "test1",
+    "team_name": "test",
+    "description": "test ragud",
+    "isPaid": true,
+    "created_at": "2025-07-05"
+  },{
+    "team_id": "test2",
+    "team_name": "test",
+    "isPaid": true,
+    "created_at": "2025-07-05"
+  },
+  {
+    "team_id": "test3",
+    "team_name": "test",
+    "isPaid": true,
+    "created_at": "2025-07-05"
+  },
+  {
+    "team_id": "test4",
+    "team_name": "test",
+    "isPaid": true,
+    "created_at": "2025-07-05"
+  },
+  {
+    "team_id": "test5",
+    "team_name": "test",
+    "isPaid": true,
+    "created_at": "2025-07-05"
+  },
+  {
+    "team_id": "test6",
+    "team_name": "test",
+    "isPaid": true,
+    "created_at": "2025-07-05T12:00:00"
+  }
+]

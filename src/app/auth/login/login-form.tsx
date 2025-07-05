@@ -29,11 +29,9 @@ export function LoginForm({
         try {
             const res = await login(formData)
 
-            console.log(res.message)
-
-            if (res.status && res.redirect) {
-                router.push(res.redirect)
-            }
+            setTimeout(() => {
+            router.push('/league-administrator/pages/dashboard')
+            }, 100)
         } catch {
             console.log("Something went wrong.")
         }
@@ -55,6 +53,7 @@ export function LoginForm({
                                 <Input
                                     type="email"
                                     placeholder="m@example.com"
+                                    value={"noahboat231@gmail.com"}
                                     {...register("email", { required: true })}
                                 />
                             </div>
@@ -68,7 +67,7 @@ export function LoginForm({
                                         Forgot your password?
                                     </Link>
                                 </div>
-                                <Input type="password" {...register("password_str", { required: true })} />
+                                <Input type="password" {...register("password_str", { required: true })} value={'password123'}/>
                             </div>
                             <Button type="submit" className="w-full">
                                 Login

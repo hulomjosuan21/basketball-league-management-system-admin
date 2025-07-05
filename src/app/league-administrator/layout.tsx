@@ -20,7 +20,6 @@ export default function RootLayoutLayout({ children }: { children: React.ReactNo
         <SidebarProvider>
             <AppSidebar />
             {children}
-
         </SidebarProvider>
     )
 }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-// import { jwtVerify } from "jose"
+import { jwtVerify } from "jose"
 
 // const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET_KEY!)
 
 // export async function middleware(req: NextRequest) {
-//     const token = req.cookies.get("token")?.value
+//     const token = req.cookies.get("access_token_cookie")?.value
 //     const url = req.nextUrl.clone()
 
 //     if (!token) {
