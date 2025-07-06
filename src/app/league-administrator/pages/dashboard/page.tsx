@@ -1,17 +1,22 @@
 "use client"
-
 import {
     SidebarInset,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import React from "react"
-import data from "./data.json"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { TeamTable } from "@/components/tables/team-submission-data-table"
-import { Team } from "@/models/team"
+import { useHandleErrorWithToast } from "@/lib/utils/handleError"
 export default function DashboardPage() {
+    const handleError = useHandleErrorWithToast();
+    const handleClick = () => {
+        try {
+            throw new Error("Yesy")
+        }catch(e) {
+            handleError(e)
+        }
+    }
+
     return (
         <SidebarInset>
             <div className="flex flex-col h-screen w-full overflow-y-auto">
@@ -38,8 +43,8 @@ export default function DashboardPage() {
                     </div>
                 </header>
 
-                <div className="flex-1 flex flex-col gap-4 p-4">
-                    <TeamTable data={data as unknown as Team[]} />
+                <div className="flex flex-col gap-4 p-4">
+                    <Button className="w-fit" onClick={handleClick}>Test Error</Button>
                 </div>
             </div>
         </SidebarInset>

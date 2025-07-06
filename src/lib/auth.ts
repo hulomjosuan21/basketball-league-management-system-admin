@@ -1,30 +1,33 @@
-import { AccountTypeEnum } from "@/enums/AccountTypeEnum";
-import { accountTypeFromValue } from "@/helpers/AccountTypeEnumHelper"
-import jwt from "jsonwebtoken"
+import { jwtVerify } from "jose"
 import { cookies } from "next/headers"
+import { TokenMissingError } from "./errors"
 
-const JWT_SECRET = process.env.JWT_SECRET_KEY!
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET_KEY)
 
-export async function getUserFromToken(): Promise<{
-    user_id: string;
-    account_type: AccountTypeEnum | undefined;
-} | null> {
-    const cookieStore = await cookies()
-    const token = cookieStore.get("access_token_cookie")?.value
+export interface DecodedUser {
+  user_id: string
+  account_type: string
+  [key: string]: any
+}
 
-    if (!token) return null
+export async function getUserFromToken(): Promise<DecodedUser | null> {
+  try {
+    const cookieStore = cookies()
+    const token = (await cookieStore).get("access_token_cookie")?.value
 
-    try {
-        const payload = jwt.verify(token, JWT_SECRET) as {
-            sub: string
-            account_type: string
-        }
-
-        return {
-            user_id: payload.sub,
-            account_type: accountTypeFromValue(payload.account_type),
-        }
-    } catch {
-        return null
+    if (!token) {
+      console.warn("No token found in cookies")
+      return null
     }
+
+    const { payload } = await jwtVerify(token, JWT_SECRET)
+
+    return {
+      user_id: payload.sub as string,
+      account_type: payload.account_type as string,
+      ...payload,
+    }
+  } catch (err) {
+    throw new TokenMissingError()
+  }
 }

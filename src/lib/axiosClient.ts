@@ -9,7 +9,7 @@ class AxiosClient {
         const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'
         this._client = axios.create({
             baseURL,
-            timeout: 5 * 1000,
+            timeout: 50 * 1000,
             timeoutErrorMessage: 'Request timed out',
             withCredentials: true,
         })

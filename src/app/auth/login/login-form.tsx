@@ -29,9 +29,9 @@ export function LoginForm({
         try {
             const res = await login(formData)
 
-            setTimeout(() => {
-            router.push('/league-administrator/pages/dashboard')
-            }, 100)
+            if(res.status && res.redirect) {
+                router.push(res.redirect)
+            }
         } catch {
             console.log("Something went wrong.")
         }

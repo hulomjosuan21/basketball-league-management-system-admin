@@ -15,6 +15,7 @@ import {
     LifeBuoy,
     Send,
     Settings,
+    CalendarCheck,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -119,6 +120,13 @@ const data = {
             ],
         }
     ],
+    game: [
+        {
+            title: "Schedules",
+            url: "#",
+            icon: CalendarCheck,
+        },
+    ],
     navSecondary: [
         {
             title: "Settings",
@@ -150,6 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarContent className="pb-4">
                     <NavMain label="Platform" items={data.platform} />
                     <NavMain label="League" items={data.league} />
+                    <NavMain label="Game" items={data.game} />
                     <NavSecondary items={data.navSecondary} className="mt-auto" />
                 </SidebarContent>
             </ScrollArea>
