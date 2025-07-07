@@ -40,4 +40,16 @@ export class ApiResponse<T> {
             payload: undefined, // No payload at all
         });
     }
+
+    toJSON(): {
+        status: boolean;
+        message: string;
+        redirect?: string;
+    } {
+        return {
+            status: this.status,
+            message: this.message,
+            redirect: this.redirect,
+        };
+    }
 }

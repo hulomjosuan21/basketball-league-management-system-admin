@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils"
 import { getCroppedImg } from "@/helpers/getCroppedImg"
 
 type ImageUploaderProps = {
-  value?: string
-  onChange?: (value: string) => void
+  value?: File
+  onChange?: (value: File) => void
   aspectRatio?: number
 }
 
@@ -18,14 +18,18 @@ export default function ImageUploader({
   aspectRatio = 1,
 }: ImageUploaderProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null)
-  const [imagePreview, setImagePreview] = useState<string>(value ?? "")
+  const [imagePreview, setImagePreview] = useState<string | undefined>(value ? URL.createObjectURL(value) : undefined)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
   const [showCropModal, setShowCropModal] = useState(false)
 
   useEffect(() => {
-    setImagePreview(value ?? "")
+    if (value) {
+      setImagePreview(URL.createObjectURL(value))
+    } else {
+      setImagePreview(undefined)
+    }
   }, [value])
 
   const handleFileUpload = (file: File) => {
@@ -48,8 +52,8 @@ export default function ImageUploader({
   }
 
   const removeFile = () => {
-    setImagePreview("")
-    if (onChange) onChange("")
+    setImagePreview(undefined)
+    if (onChange) onChange(undefined as any)
   }
 
   const onCropComplete = useCallback((_: any, croppedPixels: any) => {
@@ -58,17 +62,20 @@ export default function ImageUploader({
 
   const handleCropSave = async () => {
     if (!imageSrc || !croppedAreaPixels) return
-    const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels)
-    setImagePreview(croppedImage)
+
+    const blob = await getCroppedImg(imageSrc, croppedAreaPixels)
+    const file = new File([blob], "league_banner.jpg", { type: "image/jpeg" })
+
+    setImagePreview(URL.createObjectURL(file))
     setShowCropModal(false)
-    if (onChange) onChange(croppedImage)
+    if (onChange) onChange(file)
   }
 
   return (
     <>
       <div
         className={cn(
-          "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+          "border-1 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
           "hover:border-primary/50 hover:bg-primary/5",
           imagePreview ? "border-primary" : "border-gray-300"
         )}
@@ -115,7 +122,6 @@ export default function ImageUploader({
         />
       </div>
 
-      {/* Crop Modal */}
       <Dialog open={showCropModal} onOpenChange={setShowCropModal}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>

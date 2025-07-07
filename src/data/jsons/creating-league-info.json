@@ -1,0 +1,56 @@
+{
+    "badge": "League Info",
+    "description": "Here's everything you need to know before creating league.",
+    "items": [
+        {
+            "prefix": "1",
+            "title": "League title",
+            "description": "A unique and descriptive name for your league. This will be visible to all participants."
+        },
+        {
+            "prefix": "2",
+            "title": "League Banner",
+            "description": "An image that visually represents your league. Make sure to upload a valid image file."
+        },
+        {
+            "prefix": "3",
+            "title": "Overall League Budget",
+            "description": "Specify the total budget for the league. This can include venue fees, prizes, and other expenses. Must be between ₱0 and ₱10,000."
+        },
+        {
+            "prefix": "4",
+            "title": "Registration Deadline",
+            "description": "The last date that teams or players can register to join the league. This must be set in the future."
+        },
+        {
+            "prefix": "5",
+            "title": "Opening Date",
+            "description": "The formal opening ceremony or kickoff date of the league. This must be set in the future."
+        },
+        {
+            "prefix": "6",
+            "title": "Start Date",
+            "description": "The official start date for league games or matches. This must be set in the future."
+        },
+        {
+            "prefix": "7",
+            "title": "League description",
+            "description": "Provide a detailed description of the league, including its purpose, vision, and structure."
+        },
+        {
+            "prefix": "8",
+            "title": "League Rules",
+            "description": "State the rules that govern the league to ensure fair play and consistency across all games."
+        },
+        {
+            "prefix": "9",
+            "title": "Sponsors (Optional)",
+            "description": "You may list any sponsors supporting the league (Example: McDo, CRMC,). This field is optional."
+        },
+        {
+            "prefix": "10",
+            "title": "Categories",
+            "description": "Add one or more categories/divisions for your league. Each must include name, format, maximum number of teams, and entrance fee. The entrance fee can also be set to ₱0 if you want to make it free."
+        }
+    ]
+}

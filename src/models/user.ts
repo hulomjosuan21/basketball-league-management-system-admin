@@ -1,7 +1,7 @@
 import { AccountTypeEnum } from "@/enums/AccountTypeEnum";
 import { accountTypeFromValue } from "@/helpers/AccountTypeEnumHelper";
 
-type UserFullData = {
+type UserType = {
     user_id: string;
     email: string;
     contact_number: string;
@@ -33,7 +33,7 @@ export class UserModel {
     created_at!: Date;
     updated_at!: Date;
 
-    constructor(data: UserFullData) {
+    constructor(data: UserType) {
         this.user_id = data.user_id;
         this.email = data.email;
         this.contact_number = data.contact_number;

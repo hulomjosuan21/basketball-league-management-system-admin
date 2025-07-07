@@ -10,6 +10,8 @@ import image1 from "../../../../assets/images/image-1.jpg";
 import { useForm } from "react-hook-form"
 import { login } from "@/services/auth"
 import { useRouter } from 'next/navigation'
+import { useState } from "react"
+import { Loader2 } from "lucide-react"
 
 type LoginFormInputs = {
     email: string
@@ -22,7 +24,10 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
     const router = useRouter()
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>()
+    const [isLoggingIn, setIsLoggingIn] = useState(false)
+
     const onSubmit = async (data: LoginFormInputs) => {
+        setIsLoggingIn(true)
         const formData = new FormData()
         formData.append("email", data.email)
         formData.append("password_str", data.password_str)
@@ -34,6 +39,8 @@ export function LoginForm({
             }
         } catch {
             console.log("Something went wrong.")
+        }finally {
+            setIsLoggingIn(false)
         }
     }
 
@@ -51,6 +58,7 @@ export function LoginForm({
                             <div className="grid gap-3">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
+                                    disabled={isLoggingIn}
                                     type="email"
                                     placeholder="m@example.com"
                                     value={"noahboat231@gmail.com"}
@@ -67,9 +75,10 @@ export function LoginForm({
                                         Forgot your password?
                                     </Link>
                                 </div>
-                                <Input type="password" {...register("password_str", { required: true })} value={'password123'}/>
+                                <Input disabled={isLoggingIn} type="password" {...register("password_str", { required: true })} value={'password123'}/>
                             </div>
-                            <Button type="submit" className="w-full">
+                            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                                {isLoggingIn && <Loader2 className="animate-spin text-muted-foreground" />}
                                 Login
                             </Button>
                             <div className="text-center text-sm">

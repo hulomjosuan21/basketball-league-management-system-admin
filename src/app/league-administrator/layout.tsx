@@ -13,7 +13,14 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { Metadata } from "next"
 import React from "react"
+
+export const metadata: Metadata = {
+  title: "BogoBallers | League Admin",
+  description: "Your app dashboard with all essential controls.",
+}
+
 
 export default function RootLayoutLayout({ children }: { children: React.ReactNode }) {
     return (

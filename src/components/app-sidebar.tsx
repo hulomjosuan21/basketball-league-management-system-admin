@@ -30,6 +30,9 @@ import {
 import { AppSidebarHeader } from "@/components/app-sidebar-header"
 import { ScrollArea } from "./ui/scroll-area"
 import { NavSecondary } from "./nav-secondary"
+import { useQuery } from "@tanstack/react-query"
+import { fetchLeagueAdmin } from "@/services/league-admin"
+import { Skeleton } from "./ui/skeleton"
 
 const data = {
     user: {
@@ -95,12 +98,12 @@ const data = {
     league: [
         {
             title: "Create",
-            url: "/league-administrator",
+            url: "/league-administrator/pages/league/create",
             icon: Plus,
         },
         {
             title: "Current",
-            url: "#",
+            url: "/league-administrator/pages/league/current",
             icon: Book,
         },
         {
@@ -148,25 +151,85 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const { data: admin, isLoading, error } = useQuery({
+        queryKey: ['fetch-league-admin'],
+        queryFn: fetchLeagueAdmin,
+        staleTime: 5 * 60_000,
+    })
+
+    const navUser = () => {
+        if(isLoading) {
+            return <NavUserSkeleton />
+        }else if(admin != undefined) {
+            return <NavUser admin={admin} />
+        }else {
+            return null
+        }
+    }
+
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <AppSidebarHeader {...data.user} />
+                <AppSidebarHeader />
             </SidebarHeader>
 
             <ScrollArea className="flex-1 overflow-hidden">
                 <SidebarContent className="pb-4">
-                    <NavMain label="Platform" items={data.platform} />
-                    <NavMain label="League" items={data.league} />
-                    <NavMain label="Game" items={data.game} />
+                    {isLoading ? (
+                        <div className="space-y-6">
+                            <SidebarNavSkeleton label="Platform" count={4} />
+                            <SidebarNavSkeleton label="League" count={3} />
+                            <SidebarNavSkeleton label="Game" count={1} />
+                        </div>
+                    ) : error ? (
+                        <div className="flex items-center justify-center h-full py-10 text-sm text-muted-foreground">
+                            <p>⚠️ Failed to load sidebar: {error.message}</p>
+                        </div>
+                    ) : (
+                        <>
+                            <NavMain label="Platform" items={data.platform} />
+                            <NavMain label="League" items={data.league} />
+                            <NavMain label="Game" items={data.game} />
+                        </>
+                    )}
+
+                    {!isLoading && !error && (
+                        <NavSecondary items={data.navSecondary} className="mt-auto" />
+                    )}
                     <NavSecondary items={data.navSecondary} className="mt-auto" />
                 </SidebarContent>
             </ScrollArea>
 
             <SidebarFooter>
-                <NavUser user={data.user} />
+                {navUser()}
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>
+    )
+}
+
+function NavUserSkeleton() {
+    return (
+        <div className="flex items-center gap-4 p-4">
+            <Skeleton className="h-10 w-10 rounded-lg" />
+            <div className="flex flex-col space-y-1">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-28" />
+            </div>
+        </div>
+    )
+}
+
+function SidebarNavSkeleton({ label, count }: { label: string, count: number }) {
+    return (
+        <div className="space-y-2">
+            <p className="text-xs text-muted-foreground px-4 pt-4">{label}</p>
+            {Array.from({ length: count }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-3 px-4 py-2">
+                    <Skeleton className="h-5 w-5 rounded-md" />
+                    <Skeleton className="h-4 w-24" />
+                </div>
+            ))}
+        </div>
     )
 }

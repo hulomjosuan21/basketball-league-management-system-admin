@@ -1,35 +1,36 @@
-import { Area } from "react-easy-crop"
+export const getCroppedImg = (
+  imageSrc: string,
+  crop: { x: number; y: number; width: number; height: number }
+): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.src = imageSrc;
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-function createImage(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const image = new Image()
-        image.crossOrigin = "anonymous"
-        image.onload = () => resolve(image)
-        image.onerror = (err) => reject(err)
-        image.src = url
-    })
-}
+      if (!ctx) return reject("Canvas context not available");
 
-export async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
-    const image = await createImage(imageSrc)
-    const canvas = document.createElement("canvas")
-    canvas.width = pixelCrop.width
-    canvas.height = pixelCrop.height
-    const ctx = canvas.getContext("2d")
+      canvas.width = crop.width;
+      canvas.height = crop.height;
 
-    if (!ctx) throw new Error("No canvas context")
-
-    ctx.drawImage(
+      ctx.drawImage(
         image,
-        pixelCrop.x,
-        pixelCrop.y,
-        pixelCrop.width,
-        pixelCrop.height,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
         0,
         0,
-        pixelCrop.width,
-        pixelCrop.height
-    )
+        crop.width,
+        crop.height
+      );
 
-    return canvas.toDataURL("image/jpeg")
-}
+      canvas.toBlob((blob) => {
+        if (!blob) return reject("Failed to crop image");
+        resolve(blob);
+      }, "image/jpeg");
+    };
+    image.onerror = reject;
+  });
+};

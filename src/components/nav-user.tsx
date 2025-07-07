@@ -9,6 +9,7 @@ import {
     Sparkles,
     UsersRound,
     LucideIcon,
+    Loader2,
 } from "lucide-react"
 
 import {
@@ -32,21 +33,21 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { useLogout } from "@/lib/logout"
+import { useEffect, useState } from "react"
+import { LeagueAdminType } from "@/models/league-administrator"
 
-export function NavUser({
-    user,
-}: {
-    user: {
-        name: string
-        email: string
-        address: string
-        logo: LucideIcon,
-        profile?: string,
-    }
-}) {
+export function NavUser({admin}:{admin: LeagueAdminType}) {
     const { isMobile } = useSidebar()
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
     const logout = useLogout()
-    const Logo = user.logo
+    const handleLogout = async () => {
+        setIsLoggingOut(true)
+        try {
+            await logout()
+        } finally {
+            setIsLoggingOut(false)
+        }
+    }
 
     return (
         <SidebarMenu>
@@ -57,12 +58,13 @@ export function NavUser({
                             size="lg"
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         >
-                            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                                <UsersRound className="size-4" />
-                            </div>
+                            <Avatar className="h-8 w-8 rounded-lg">
+                                <AvatarImage src={admin.organization_logo_url} alt="logo" />
+                                <AvatarFallback className="rounded-lg">BB</AvatarFallback>
+                            </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-medium">{user.name}</span>
-                                <span className="truncate text-xs">{user.email}</span>
+                                <span className="truncate font-medium">{admin.organization_name}</span>
+                                <span className="truncate text-xs">{admin.user.email}</span>
                             </div>
                             <ChevronsUpDown className="ml-auto size-4" />
                         </SidebarMenuButton>
@@ -76,13 +78,13 @@ export function NavUser({
                         <DropdownMenuLabel className="p-0 font-normal">
                             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                 <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarImage src={user.profile} alt={user.name} />
+                                    <AvatarImage src={admin.organization_name} alt="org name" />
                                     <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                                 </Avatar>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">{user.name}</span>
-                                    <span className="truncate text-xs">{user.email}</span>
-                                    <span className="truncate text-xs text-muted-foreground">{user.address}</span>
+                                    <span className="truncate font-medium">{admin.organization_name}</span>
+                                    <span className="truncate text-xs">{admin.user.email}</span>
+                                    <span className="truncate text-xs text-muted-foreground">{admin.organization_address}</span>
                                 </div>
                             </div>
                         </DropdownMenuLabel>
@@ -91,18 +93,14 @@ export function NavUser({
                         <DropdownMenuGroup>
                             <DropdownMenuItem>
                                 <BadgeCheck />
-                                Account
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem>
-                                <Bell />
-                                Notifications
+                                About Organization
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={logout}>
-                            <LogOut />
+                        <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                            <LogOut className="mr-2" />
                             Log out
+                            {isLoggingOut && <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted-foreground" />}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

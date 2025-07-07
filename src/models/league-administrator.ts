@@ -1,8 +1,8 @@
 import { UserModel } from "./user";
 
-type LeagueAdminFullData = {
-    league_administrator_id: string;
-    user_id: string;
+export type LeagueAdminType = {
+    readonly league_administrator_id: string;
+    readonly user_id: string;
     organization_type: string;
     organization_name: string;
     organization_address: string;
@@ -33,7 +33,7 @@ function isCreationData(data: any): data is LeagueAdminCreationData {
     );
 }
 
-export class LeagueAdministratorModel {
+export class LeagueAdministratorModel implements LeagueAdminType{
     league_administrator_id!: string;
     user_id!: string;
     organization_type: string;
@@ -48,7 +48,7 @@ export class LeagueAdministratorModel {
     is_operational!: boolean;
     organization_logo?: File;
 
-    constructor(data: LeagueAdminFullData | LeagueAdminCreationData) {
+    constructor(data: LeagueAdminType | LeagueAdminCreationData) {
         if (isCreationData(data)) {
             this.league_administrator_id = '';
             this.user_id = '';

@@ -5,17 +5,27 @@ import {
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { useHandleErrorWithToast } from "@/lib/utils/handleError"
+import { LeagueMeta, useLeagueMeta } from "@/lib/stores/useLeagueMeta"
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
+import { fetchLeagueMeta } from "@/services/league-service"
+import { useEffect } from "react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Loader2Icon } from "lucide-react"
+
 export default function DashboardPage() {
-    const handleError = useHandleErrorWithToast();
-    const handleClick = () => {
-        try {
-            throw new Error("Yesy")
-        }catch(e) {
-            handleError(e)
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['league-meta'],
+        queryFn: fetchLeagueMeta,
+        staleTime: 5 * 60_000,
+    })
+
+    const { leagueMeta, setLeagueMeta } = useLeagueMeta()
+
+    useEffect(() => {
+        if (data) {
+            setLeagueMeta(data)
         }
-    }
+    }, [data, setLeagueMeta])
 
     return (
         <SidebarInset>
@@ -29,22 +39,30 @@ export default function DashboardPage() {
                         />
                         <h1 className="text-base font-medium">Dashboard</h1>
                         <div className="ml-auto flex items-center gap-2">
-                            <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
-                                <Link
-                                    href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                    className="dark:text-foreground"
-                                >
-                                    GitHub
-                                </Link>
-                            </Button>
+
                         </div>
                     </div>
                 </header>
 
                 <div className="flex flex-col gap-4 p-4">
-                    <Button className="w-fit" onClick={handleClick}>Test Error</Button>
+                                        {isLoading && (
+                        <Alert>
+                            {isLoading && <Loader2Icon className="animate-spin" />}
+                            <AlertTitle>Fetching League Meta...</AlertTitle>
+                            <AlertDescription>
+                                Please wait while we load the league information.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>
+                                Failed to fetch league meta: {error.message}
+                            </AlertDescription>
+                        </Alert>
+                    )}
                 </div>
             </div>
         </SidebarInset>
