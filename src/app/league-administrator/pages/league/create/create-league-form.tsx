@@ -22,6 +22,7 @@ import { createNewLeague } from "@/services/league-service";
 import { useHandleErrorWithToast } from "@/lib/utils/handleError";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { LeagueMeta, useLeagueMeta } from "@/lib/stores/useLeagueMeta";
 
 const CreateLeagueFormSchema = () =>
     z.object({
@@ -46,7 +47,6 @@ const CreateLeagueFormSchema = () =>
             .min(new Date(), "Start date must be in the future"),
         league_description: z.string().min(1, "League description is required"),
         league_rules: z.string().min(1, "League rules are required"),
-        sponsors: z.string().optional(),
         categories: z
             .array(
                 z.object({
@@ -71,8 +71,8 @@ interface CreateLeagueFormProps {
 
 export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
     const schema = useMemo(() => CreateLeagueFormSchema(), []);
-    const [showInstructions, setShowInstructions] = useState(false);
     const handleError = useHandleErrorWithToast()
+    const { updateLeagueMeta } = useLeagueMeta()
     const [isLoading, setIsLoading] = useState(false)
 
     const form = useForm<CreateLeagueFormValues>({
@@ -86,7 +86,6 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
             start_date: undefined,
             league_description: "",
             league_rules: "",
-            sponsors: "",
             categories: [],
         },
     });
@@ -103,16 +102,16 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
             formData.append("start_date", values.start_date.toISOString());
             formData.append("league_rules", values.league_rules);
             formData.append("status", "Scheduled");
-            if (values.sponsors) formData.append("sponsors", values.sponsors);
             formData.append("categories", JSON.stringify(values.categories));
             formData.append("banner_image", values.league_banner);
 
             const response = await createNewLeague(formData);
             toast.success(response.message)
+            updateLeagueMeta({ has_league: true })
             form.reset()
         } catch (e) {
             handleError(e);
-        }finally {
+        } finally {
             setIsLoading(false);
         }
     };
@@ -125,11 +124,11 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
     };
 
     return (
-        <div className={hasLeague ? "pointer-events-none opacity-10" : ""}>
+        <div className={cn(hasLeague && "disable-on-loading-10")}>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className={cn(isLoading ? "pointer-events-none opacity-50 space-y-6" : "space-y-6")}>
                     <FormField
-                    disabled={isLoading}
+                        disabled={isLoading}
                         control={form.control}
                         name="league_banner"
                         render={({ field }) => (

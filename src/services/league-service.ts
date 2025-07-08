@@ -7,6 +7,7 @@ import axiosClient from "@/lib/axiosClient";
 import { TokenMissingError } from "@/lib/errors";
 import { logout } from "@/lib/serverLogout";
 import { LeagueMeta } from "@/lib/stores/useLeagueMeta";
+import { LeagueResourceType, LeagueType } from "@/models/league";
 
 export async function createNewLeague(formData: FormData) {
   const admin = await getLeagueAdminFromToken();
@@ -22,6 +23,20 @@ export async function createNewLeague(formData: FormData) {
   const apiResponse = ApiResponse.fromJsonNoPayload<void>(response.data);
 
   return apiResponse.toJSON();
+}
+
+export async function updateLeagueResource({data,league_id}:{data: Partial<LeagueResourceType>, league_id?: string}) {
+  if(!league_id) throw new Error("No found league!")
+  await axiosClient.client.put(`/league/resource/update/${league_id}`,data);
+}
+
+export async function fetchLeagueResource(league_id?: string) {
+  if(!league_id) throw new Error("No found league!")
+  const response = await axiosClient.client.get(`/league/resource/${league_id}`);
+
+  const apiResponse = ApiResponse.fromJson<LeagueResourceType>(response.data);
+
+  return apiResponse.payload
 }
 
 export const fetchLeagueMeta = async (): Promise<LeagueMeta> => {

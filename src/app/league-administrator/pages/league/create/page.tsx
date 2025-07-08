@@ -17,7 +17,7 @@ export const defaultInformation = rawJson as InformationDisplayProps;
 
 export default function CreateLeaguePage() {
     const [showInstructions, setShowInstructions] = useState(false)
-    const { leagueMeta, setLeagueMeta } = useLeagueMeta()
+    const { leagueMeta } = useLeagueMeta()
 
     return (
         <SidebarInset>

@@ -27,6 +27,7 @@ import {
     SidebarFooter,
     SidebarHeader,
     SidebarRail,
+    SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { AppSidebarHeader } from "@/components/app-sidebar-header"
 import { ScrollArea } from "./ui/scroll-area"
@@ -132,7 +133,7 @@ const data = {
     game: [
         {
             title: "Schedules",
-            url: "#",
+            url: "/league-administrator/pages/game/schedule",
             icon: CalendarCheck,
         },
     ],
@@ -198,14 +199,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             <NavMain label="Game" items={data.game} />
                         </>
                     )}
-
-                    {!isLoading && !error && (
-                        <NavSecondary items={data.navSecondary} className="mt-auto" />
-                    )}
+                    
                 </SidebarContent>
             </ScrollArea>
-
             <SidebarFooter>
+                <div className="border-t border-muted" />
+                {!isLoading && !error && (
+                        <NavSecondary items={data.navSecondary} className="mt-auto" />
+                    )}
                 {navUser()}
             </SidebarFooter>
             <SidebarRail />

@@ -9,6 +9,41 @@
   @apply flex justify-between px-1 sticky w-full top-0 left-0 py-2 items-center pr-4 z-20 bg-background border-b;
 }
 
+.disable-on-loading-10 {
+  @apply pointer-events-none opacity-[0.1];
+}
+.disable-on-loading-20 {
+  @apply pointer-events-none opacity-[0.2];
+}
+.disable-on-loading-30 {
+  @apply pointer-events-none opacity-[0.3];
+}
+.disable-on-loading-40 {
+  @apply pointer-events-none opacity-[0.4];
+}
+.disable-on-loading-50 {
+  @apply pointer-events-none opacity-[0.5];
+}
+.disable-on-loading-60 {
+  @apply pointer-events-none opacity-[0.6];
+}
+.disable-on-loading-70 {
+  @apply pointer-events-none opacity-[0.7];
+}
+.disable-on-loading-80 {
+  @apply pointer-events-none opacity-[0.8];
+}
+.disable-on-loading-90 {
+  @apply pointer-events-none opacity-[0.9];
+}
+.disable-on-loading-100 {
+  @apply pointer-events-none opacity-[1];
+}
+
+.text-helper {
+  @apply text-xs text-muted-foreground mt-1 ml-1;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -10,8 +10,10 @@ import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
 import { fetchLeagueMeta } from "@/services/league-service"
 import { useEffect } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2Icon } from "lucide-react"
+import { CircleX, Loader2Icon } from "lucide-react"
 import { SectionCards } from "./section-cards"
+import Link from "next/link"
+
 
 export default function DashboardPage() {
     const { data, isLoading, error } = useQuery({
@@ -29,7 +31,7 @@ export default function DashboardPage() {
     }, [data, setLeagueMeta])
 
     const header = (
-        <header className="flex h-(--header-height) py-1 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+        <header className="flex h-[--header-height] py-1 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-[--header-height]">
             <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
                 <SidebarTrigger className="-ml-1" />
                 <Separator
@@ -37,20 +39,34 @@ export default function DashboardPage() {
                     className="mx-2 data-[orientation=vertical]:h-4"
                 />
                 <h1 className="text-base font-medium">Dashboard</h1>
-                <div className="ml-auto flex items-center gap-2">
-
-                </div>
+                <div className="ml-auto flex items-center gap-2"></div>
             </div>
         </header>
     )
 
     const contentHasLeague = () => {
         if (leagueMeta.league_meta && leagueMeta.has_league && !isLoading && !error) {
-            return <div className="@container/main flex flex-1 flex-col gap-2">
-                <div className="flex flex-col gap-4 py-4 md:gap-6">
-                    <SectionCards />
+            return (
+                <div className="@container/main flex flex-1 flex-col gap-2">
+                    <div className="flex flex-col gap-4 py-4 md:gap-6">
+                        <SectionCards />
+                    </div>
                 </div>
-            </div>
+            )
+        } else if (!leagueMeta.has_league && !isLoading && !error) {
+            return (
+                <Alert>
+                    <AlertTitle>No League Found</AlertTitle>
+                    <AlertDescription>
+                        You currently do not have a league. Create one to get started.
+                    </AlertDescription>
+                    <div className="mt-4">
+                        <Link href="/league-administrator/pages/league/create">
+                            <Button>Create League</Button>
+                        </Link>
+                    </div>
+                </Alert>
+            )
         } else {
             return null
         }
@@ -64,7 +80,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col gap-4 p-4">
                     {isLoading && (
                         <Alert>
-                            {isLoading && <Loader2Icon className="animate-spin" />}
+                            <Loader2Icon className="animate-spin" />
                             <AlertTitle>Fetching League Meta...</AlertTitle>
                             <AlertDescription>
                                 Please wait while we load the league information.
@@ -74,6 +90,7 @@ export default function DashboardPage() {
 
                     {error && (
                         <Alert variant="destructive">
+                            <CircleX />
                             <AlertTitle>Error</AlertTitle>
                             <AlertDescription>
                                 Failed to fetch league meta: {error.message}
