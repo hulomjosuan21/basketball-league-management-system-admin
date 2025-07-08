@@ -3,10 +3,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { encryptedStorage } from '../encryptedStorage'
+import { LeagueType } from '@/models/league'
 
 export type LeagueMeta = {
   has_league: boolean
-
+  league_meta?: Partial<LeagueType>
   // ✅ Add more fields here later, for example:
 }
 
@@ -22,6 +23,7 @@ export const useLeagueMeta = create<LeagueMetaState>()(
     (set) => ({
       leagueMeta: {
         has_league: false,
+        league_meta: undefined
 
         // ✅ Add initial values for new fields here too
       },
@@ -39,6 +41,7 @@ export const useLeagueMeta = create<LeagueMetaState>()(
         set({
           leagueMeta: {
             has_league: false,
+            league_meta: undefined
 
             // ✅ Reset additional fields here when added
             // has_league: false,

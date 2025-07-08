@@ -16,6 +16,7 @@ import {
     Send,
     Settings,
     CalendarCheck,
+    FileBox,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -107,6 +108,11 @@ const data = {
             icon: Book,
         },
         {
+            title: "Resource",
+            url: "/league-administrator/pages/league/resource",
+            icon: FileBox,
+        },
+        {
             title: "Bracket",
             url: "#",
             icon: GitFork,
@@ -196,7 +202,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {!isLoading && !error && (
                         <NavSecondary items={data.navSecondary} className="mt-auto" />
                     )}
-                    <NavSecondary items={data.navSecondary} className="mt-auto" />
                 </SidebarContent>
             </ScrollArea>
 
