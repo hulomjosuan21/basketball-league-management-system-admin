@@ -4,7 +4,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { heroData } from "@/data/public-data";
-import image2 from "../../assets/images/image-2.jpg"
+import image from "../../assets/images/image-5.jpg"
 import Image from "next/image";
 
 const HeroSection = () => {
@@ -17,7 +17,7 @@ const HeroSection = () => {
         </div>
         <div className="relative mx-auto max-w-5xl">
           <Image
-            src={image2}
+            src={image}
             alt={heroData.imageAlt}
             className="aspect-video max-h-[500px] w-full rounded-xl object-cover"
           />

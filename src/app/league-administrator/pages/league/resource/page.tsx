@@ -3,18 +3,33 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
-import { Trash2, Plus, Loader2Icon, CircleQuestionMark, CircleX } from 'lucide-react'
+import { CircleQuestionMark, Loader2Icon } from 'lucide-react'
 import { CourtType, LeagueResourceType, RefereeType, SponsorType } from '@/models/league'
 import { useLeagueMeta } from '@/lib/stores/useLeagueMeta'
 import { useQuery } from '@tanstack/react-query'
 import { fetchLeagueResource, updateLeagueResource } from '@/services/league-service'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { useHandleErrorWithToast } from '@/lib/utils/handleError'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { queryClient } from '@/lib/queryClient'
+import { ErrorAlert, LoadingAlert } from '@/components/alerts'
+import { EditableTable } from './table'
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+  VisibilityState,
+} from "@tanstack/react-table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Separator } from '@/components/ui/separator'
+import { TableHeaderWithHelper } from '@/components/table-header-with-helper'
 
 export default function LeagueResourcePage() {
   const { leagueMeta } = useLeagueMeta()
@@ -49,12 +64,7 @@ export default function LeagueResourcePage() {
     const isRefereesChanged = JSON.stringify(filteredReferees) !== JSON.stringify(filteredInitialReferees)
     const isSponsorsChanged = JSON.stringify(filteredSponsors) !== JSON.stringify(filteredInitialSponsors)
 
-    const hasNewValidData =
-      filteredCourts.length > 0 ||
-      filteredReferees.length > 0 ||
-      filteredSponsors.length > 0
-
-    setHasChanges((isCourtsChanged || isRefereesChanged || isSponsorsChanged) && hasNewValidData)
+    setHasChanges(isCourtsChanged || isRefereesChanged || isSponsorsChanged)
   }, [courts, referees, sponsors])
 
   const updateCourt = (index: number, key: keyof CourtType, value: string) => {
@@ -82,16 +92,6 @@ export default function LeagueResourcePage() {
       league_sponsors: sponsors.filter(s => s.sponsor_name || s.sponsorship_value),
     }
 
-    const noDataToSave =
-      (payload.league_courts ?? []).length === 0 &&
-      (payload.league_referees ?? []).length === 0 &&
-      (payload.league_sponsors ?? []).length === 0
-
-    if (noDataToSave) {
-      toast.error("Please fill in at least one input before saving.")
-      return
-    }
-
     initialCourts.current = JSON.parse(JSON.stringify(payload.league_courts))
     initialReferees.current = JSON.parse(JSON.stringify(payload.league_referees))
     initialSponsors.current = JSON.parse(JSON.stringify(payload.league_sponsors))
@@ -108,6 +108,7 @@ export default function LeagueResourcePage() {
         data: payload,
       })
 
+      queryClient.invalidateQueries({ queryKey: ['league-resource'] })
       setHasChanges(false)
       toast.success("Successfully updated league resources.")
     } catch (e) {
@@ -117,212 +118,144 @@ export default function LeagueResourcePage() {
     }
   }
 
-  const didSetInitials = useRef(false)
-
   useEffect(() => {
-    if (data && !didSetInitials.current) {
-      const {
-        league_courts: fetchedCourts = [],
-        league_referees: fetchedReferees = [],
-        league_sponsors: fetchedSponsors = [],
-      } = data
+    if (data) {
+      const { league_courts = [], league_referees = [], league_sponsors = [] } = data
 
-      initialCourts.current = JSON.parse(JSON.stringify(fetchedCourts))
-      initialReferees.current = JSON.parse(JSON.stringify(fetchedReferees))
-      initialSponsors.current = JSON.parse(JSON.stringify(fetchedSponsors))
-
-      setCourts(fetchedCourts)
-      setReferees(fetchedReferees)
-      setSponsors(fetchedSponsors)
-
-      didSetInitials.current = true
+      setCourts(league_courts)
+      setReferees(league_referees)
+      setSponsors(league_sponsors)
+      if (initialCourts.current.length === 0 && initialReferees.current.length === 0 && initialSponsors.current.length === 0) {
+        initialCourts.current = JSON.parse(JSON.stringify(league_courts))
+        initialReferees.current = JSON.parse(JSON.stringify(league_referees))
+        initialSponsors.current = JSON.parse(JSON.stringify(league_sponsors))
+      }
     }
   }, [data])
 
-  const resourceCards = (
-    <div className={cn((isLoading || isUpdating) && "disable-on-loading-50")}>
-      <div
-        className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <CardTitle className="text-lg">Courts</CardTitle>
-            <Button
-              size="sm"
-              onClick={() => {
-                setCourts([...courts, { court_name: '', court_address: '' }])
-              }}
-            >
-              <Plus className="w-4 h-4 mr-1" /> Add
-            </Button>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {courts.map((court, index) => (
-              <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-start">
-                <div>
-                  <Input
-                    placeholder="Court Name"
-                    value={court.court_name}
-                    onChange={(e) => updateCourt(index, 'court_name', e.target.value)}
-                  />
-                  {court.court_name.trim() === "" && <p className="text-helper">
-                    e.g., Don Celestino Martinez Sr. Sports Complex
-                  </p>}
-                </div>
+  const courtColumns: ColumnDef<CourtType>[] = [
+    {
+      accessorKey: "court_name",
+      header: () => <TableHeaderWithHelper headerText='Court Name' helperText='(e.g. Barangay Court)' />,
+      cell: ({ row }: { row: { original: CourtType; index: number } }) => (
+        <Input
+          value={row.original.court_name}
+          onChange={(e) => updateCourt(row.index, "court_name", e.target.value)}
+        />
+      ),
+    },
+    {
+      accessorKey: "court_address",
+      header: () => <TableHeaderWithHelper headerText='Court Address' helperText='(e.g., Bogo City, Cebu)' />,
+      cell: ({ row }: { row: { original: CourtType; index: number } }) => (
+        <Input
+          value={row.original.court_address}
+          onChange={(e) => updateCourt(row.index, "court_address", e.target.value)}
+        />
+      ),
+    },
+  ]
 
-                <div>
-                  <Input
-                    placeholder="Court Address"
-                    value={court.court_address}
-                    onChange={(e) => updateCourt(index, 'court_address', e.target.value)}
-                  />
-                  {court.court_address.trim() === "" && <p className="text-helper">
-                    e.g., Bogo City, Cebu
-                  </p>}
-                </div>
+  const sponsorColumns: ColumnDef<SponsorType>[] = [
+    {
+      accessorKey: "sponsor_name",
+      header: () => <TableHeaderWithHelper headerText='Sponsor Name' helperText='(e.g., Jollibee Corp.)' />,
+      cell: ({ row }: { row: { original: SponsorType; index: number } }) => (
+        <Input
+          value={row.original.sponsor_name}
+          onChange={(e) => updateSponsor(row.index, "sponsor_name", e.target.value)}
+        />
+      ),
+    },
+    {
+      accessorKey: "sponsorship_value",
+      header: () => <TableHeaderWithHelper headerText='Sponsor Value' helperText='(Amount (e.g., 5000 PHP) or item (e.g., basketballs, uniforms))' />,
+      cell: ({ row }: { row: { original: SponsorType; index: number } }) => (
+        <Input
+          value={row.original.sponsorship_value}
+          onChange={(e) => updateSponsor(row.index, "sponsorship_value", e.target.value)}
+        />
+      ),
+    },
+  ]
 
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => setCourts(courts.filter((_, i) => i !== index))}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+  const refereeColumns: ColumnDef<RefereeType>[] = [
+    {
+      accessorKey: "referee_full_name",
+      header: () => <TableHeaderWithHelper headerText='Full Name' helperText='(e.g., Juan Dela Cruz)' />,
+      cell: ({ row }: { row: { original: RefereeType; index: number } }) => (
+        <Input
+          value={row.original.referee_full_name}
+          onChange={(e) => updateReferee(row.index, "referee_full_name", e.target.value)}
+        />
+      ),
+    },
+    {
+      accessorKey: "referee_address",
+      header: () => <TableHeaderWithHelper headerText='Address' helperText='(e.g., Barangay San Vicente, Bogo City)' />,
+      cell: ({ row }: { row: { original: RefereeType; index: number } }) => (
+        <Input
+          value={row.original.referee_address}
+          onChange={(e) => updateReferee(row.index, "referee_address", e.target.value)}
+        />
+      ),
+    },
+    {
+      accessorKey: "referee_contact_number",
+      header: () => <TableHeaderWithHelper headerText='Contact Number' helperText='(e.g., 0917 123 4567))' />,
+      cell: ({ row }: { row: { original: RefereeType; index: number } }) => (
+        <Input
+          value={row.original.referee_contact_number}
+          onChange={(e) => updateReferee(row.index, "referee_contact_number", e.target.value)}
+        />
+      ),
+    },
+  ]
 
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <CardTitle className="text-lg">Sponsors</CardTitle>
-            <Button
-              size="sm"
-              onClick={() => {
-                setSponsors([...sponsors, { sponsor_name: '', sponsorship_value: '' }])
-              }}
-            >
-              <Plus className="w-4 h-4 mr-1" /> Add
-            </Button>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {sponsors.map((sponsor, index) => (
-              <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-start">
-                <div>
-                  <Input
-                    placeholder="Sponsor Name"
-                    value={sponsor.sponsor_name}
-                    onChange={(e) => updateSponsor(index, 'sponsor_name', e.target.value)}
-                  />
-                  {sponsor.sponsor_name.trim() === "" && <p className="text-helper">
-                    e.g., Jollibee Corp.
-                  </p>}
-                </div>
+  const resourceEntries = (
+    <>
+      <TabsContent value='court'>
+        <EditableTable<CourtType>
+          data={courts}
+          columns={courtColumns}
+          onUpdate={updateCourt}
+          onDelete={(index) => setCourts(courts.filter((_, i) => i !== index))}
+          onAdd={() => setCourts([...courts, { court_name: "", court_address: "" }])}
+          filterColumn="court_name"
+        />
+      </TabsContent>
 
-                <div>
-                  <Input
-                    placeholder="Sponsorship Value"
-                    value={sponsor.sponsorship_value}
-                    onChange={(e) => updateSponsor(index, 'sponsorship_value', e.target.value)}
-                  />
-                  {sponsor.sponsorship_value.trim() === "" && <p className="text-helper">
-                    Amount (e.g., 5000 PHP) or item (e.g., basketballs, uniforms)
-                  </p>}
-                </div>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => {
-                    setSponsors(sponsors.filter((_, i) => i !== index))
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      <TabsContent value='sponsors'>
+        <EditableTable<SponsorType>
+          data={sponsors}
+          columns={sponsorColumns}
+          onUpdate={updateSponsor}
+          onDelete={(index) => setSponsors(sponsors.filter((_, i) => i !== index))}
+          onAdd={() => setSponsors([...sponsors, { sponsor_name: "", sponsorship_value: "" }])}
+          filterColumn="sponsor_name"
+        />
+      </TabsContent>
 
-      <div className='mt-4'>
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <CardTitle className="text-lg">Referees</CardTitle>
-            <Button
-              size="sm"
-              onClick={() => {
-                setReferees([...referees, {
-                  referee_full_name: '',
-                  referee_address: '',
-                  referee_contact_number: '',
-                }])
-              }}
-            >
-              <Plus className="w-4 h-4 mr-1" /> Add
-            </Button>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {referees.map((ref, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1fr_1fr_1fr_auto] gap-2 items-start"
-              >
-                <div>
-                  <Input
-                    placeholder="Full Name"
-                    value={ref.referee_full_name}
-                    onChange={(e) => updateReferee(index, 'referee_full_name', e.target.value)}
-                  />
-                  {ref.referee_full_name.trim() === "" && <p className="text-helper">
-                    e.g., Juan Dela Cruz
-                  </p>}
-                </div>
-
-                <div>
-                  <Input
-                    placeholder="Address"
-                    value={ref.referee_address}
-                    onChange={(e) => updateReferee(index, 'referee_address', e.target.value)}
-                  />
-                  {ref.referee_address.trim() === "" && <p className="text-helper">
-                    e.g., Barangay Poblacion, Bogo City
-                  </p>}
-                </div>
-
-                <div>
-                  <Input
-                    placeholder="Contact Number"
-                    value={ref.referee_contact_number}
-                    onChange={(e) => updateReferee(index, 'referee_contact_number', e.target.value)}
-                  />
-                  {ref.referee_contact_number.trim() === "" && (
-                    <p className="text-helper">
-                      e.g., 0917 123 4567
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => {
-                    setReferees(referees.filter((_, i) => i !== index))
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {hasChanges && (
-        <Button onClick={handleSave} className="self-center mt-4" disabled={isUpdating}>
-          {isUpdating && <Loader2Icon className="animate-spin" />}
-          Save Changes
-        </Button>
-      )}
-    </div>
+      <TabsContent value='referee'>
+        <EditableTable<RefereeType>
+          data={referees}
+          columns={refereeColumns}
+          onUpdate={updateReferee}
+          onDelete={(index) => setReferees(referees.filter((_, i) => i !== index))}
+          onAdd={() =>
+            setReferees([
+              ...referees,
+              {
+                referee_full_name: "",
+                referee_address: "",
+                referee_contact_number: "",
+              },
+            ])
+          }
+          filterColumn="referee_full_name"
+        />
+      </TabsContent>
+    </>
   )
 
   const header = (
@@ -355,28 +288,26 @@ export default function LeagueResourcePage() {
           {showInfo && <div className="text-muted-foreground text-sm">
             This section provides the essential data related to a specific league's operational setup. It includes information about the courts where games will be held, the referees who will officiate, and the sponsors supporting the league. This data helps administrators manage and organize league activities effectively.
           </div>}
-
-          {isLoading && (
-            <Alert>
-              <Loader2Icon className="animate-spin" />
-              <AlertTitle>Fetching League Resource...</AlertTitle>
-              <AlertDescription>
-                Please wait while we load the league information.
-              </AlertDescription>
-            </Alert>
+          {isLoading && <LoadingAlert title="Fetching League Resource..." description="Please wait while we load the league information." />}
+          {error && <ErrorAlert errorMessage={`Failed to fetch league meta: ${error.message}`} />}
+          {!isLoading && !error && (
+            <Tabs defaultValue="court">
+              <div className="flex items-center justify-between">
+                <TabsList>
+                  <TabsTrigger value="court">Court</TabsTrigger>
+                  <TabsTrigger value="sponsors">Sponsors</TabsTrigger>
+                  <TabsTrigger value="referee">Referee</TabsTrigger>
+                </TabsList>
+                {hasChanges && (
+                  <Button onClick={handleSave} disabled={isUpdating} size={'sm'}>
+                    {isUpdating && <Loader2Icon className="animate-spin mr-2" />}
+                    Save Changes
+                  </Button>
+                )}
+              </div>
+              {resourceEntries}
+            </Tabs>
           )}
-
-          {error && (
-            <Alert variant="destructive">
-              <CircleX />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                Failed to fetch league resource: {error.message}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {!isLoading && !error && resourceCards}
         </div>
       </div>
     </SidebarInset>

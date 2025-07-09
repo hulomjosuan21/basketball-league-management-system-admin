@@ -4,20 +4,22 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CircleAlert, CircleQuestionMark } from "lucide-react"
+import { CircleQuestionMark } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import CreateLeagueForm from "./create-league-form"
 import { InformationDisplay, InformationDisplayProps } from "@/components/InformationDisplay"
 import rawJson from "@/data/jsons/creating-league-info.json" assert { type: "json" };
 import { useLeagueMeta } from "@/lib/stores/useLeagueMeta"
+import { ErrorAlert, InfoAlert } from "@/components/alerts"
+import { useLeagueAdmin } from "@/hooks/useLeagueAdmin";
 
 export const defaultInformation = rawJson as InformationDisplayProps;
 
 export default function CreateLeaguePage() {
     const [showInstructions, setShowInstructions] = useState(false)
     const { leagueMeta } = useLeagueMeta()
+    const {data: admin, isLoading, error} = useLeagueAdmin()
 
     return (
         <SidebarInset>
@@ -51,16 +53,12 @@ export default function CreateLeaguePage() {
                     }
 
                     {leagueMeta.has_league && (
-                        <Alert variant="default">
-                            <CircleAlert className="h-4 w-4 text-blue-500" />
-                            <AlertTitle>Action Not Allowed</AlertTitle>
-                            <AlertDescription>
-                                You cannot create a new league until the current league is finished.
-                            </AlertDescription>
-                        </Alert>
+                        <InfoAlert title="Action Not Allowed" description="You cannot create a new league until the current league is finished."/>
                     )}
 
-                    <CreateLeagueForm hasLeague={leagueMeta.has_league} />
+                    {error && <ErrorAlert errorMessage={`Error: ${error.message}`} />}
+
+                    {admin && !isLoading && !error && <CreateLeagueForm hasLeague={leagueMeta.has_league} />}
                 </div>
             </div>
         </SidebarInset>

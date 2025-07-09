@@ -12,6 +12,7 @@ import { login } from "@/services/auth"
 import { useRouter } from 'next/navigation'
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
+import { useHandleErrorWithToast } from "@/lib/utils/handleError"
 
 type LoginFormInputs = {
     email: string
@@ -23,6 +24,7 @@ export function LoginForm({
     ...props
 }: React.ComponentProps<"div">) {
     const router = useRouter()
+    const handleError = useHandleErrorWithToast()
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>()
     const [isLoggingIn, setIsLoggingIn] = useState(false)
 
@@ -37,8 +39,8 @@ export function LoginForm({
             if(res.status && res.redirect) {
                 router.push(res.redirect)
             }
-        } catch {
-            console.log("Something went wrong.")
+        } catch(e) {
+            handleError(e)
         }finally {
             setIsLoggingIn(false)
         }
