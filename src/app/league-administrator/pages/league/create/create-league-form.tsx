@@ -23,15 +23,26 @@ import { useHandleErrorWithToast } from "@/lib/utils/handleError";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { LeagueMeta, useLeagueMeta } from "@/lib/stores/useLeagueMeta";
+import dynamic from "next/dynamic";
+import { RichTextEditorField } from "@/components/RichTextFormEditor";
+const ImageUploadField = dynamic(() => import("@/components/ImageUploadField").then(m => m.ImageUploadField), {
+    ssr: false
+})
 
 const CreateLeagueFormSchema = () =>
     z.object({
         league_title: z.string().min(1, "League title is required"),
-        league_banner: z
-            .any()
-            .refine((file) => typeof window !== "undefined" && file instanceof File, {
-                message: "League banner must be a valid image file",
-            }),
+        league_banner: z.union([
+            z.instanceof(File),
+            z.string().url()
+        ])
+            .refine(
+                (val) => {
+                    if (val instanceof File) return val.size > 0
+                    return typeof val === "string" && val.trim().length > 0
+                },
+                { message: "League banner is required" }
+            ),
         budget: z
             .coerce.number({ invalid_type_error: "Budget must be a number" })
             .min(0, "Budget must be at least ₱0")
@@ -84,7 +95,7 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
             registration_deadline: undefined,
             opening_date: undefined,
             start_date: undefined,
-            league_description: "",
+            league_description: ``,
             league_rules: "",
             categories: [],
         },
@@ -127,7 +138,7 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
         <div className={cn(hasLeague && "disable-on-loading-10")}>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className={cn(isLoading ? "pointer-events-none opacity-50 space-y-6" : "space-y-6")}>
-                    <FormField
+                    {/* <FormField
                         disabled={isLoading}
                         control={form.control}
                         name="league_banner"
@@ -144,21 +155,27 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />
+                    /> */}
 
-                    <FormField
-                        control={form.control}
-                        name="league_title"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>League Title</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Enter league title" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <FormField
+                            control={form.control}
+                            name="league_title"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>League Title</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Enter league title" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <ImageUploadField name="league_banner" label="League Banner" aspect={16 / 9} />
+                    </div>
+
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
@@ -186,11 +203,15 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
                                 name={fieldName as keyof CreateLeagueFormValues}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>{fieldName.replace("_", " ")}</FormLabel>
+                                        <FormLabel>
+                                            {fieldName
+                                                .replace(/_/g, " ")
+                                                .replace(/\b\w/g, (char) => char.toUpperCase())}
+                                        </FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="datetime-local"
-                                                value={field.value ? toDatetimeLocalString(field.value) : ""}
+                                                value={field.value instanceof Date ? toDatetimeLocalString(field.value) : ""}
                                                 onChange={(e) =>
                                                     field.onChange(new Date(e.target.value))
                                                 }
@@ -202,7 +223,7 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
                             />
                         ))}
 
-                        <FormField
+                        {/* <FormField
                             control={form.control}
                             name="league_description"
                             render={({ field }) => (
@@ -214,9 +235,9 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
                                     <FormMessage />
                                 </FormItem>
                             )}
-                        />
+                        /> */}
 
-                        <FormField
+                        {/* <FormField
                             control={form.control}
                             name="league_rules"
                             render={({ field }) => (
@@ -228,8 +249,11 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
                                     <FormMessage />
                                 </FormItem>
                             )}
-                        />
+                        /> */}
                     </div>
+
+                    <RichTextEditorField name="league_description" label="League description" />
+                    <RichTextEditorField name="league_rules" label="League Rules" />
 
                     <FormField
                         control={form.control}

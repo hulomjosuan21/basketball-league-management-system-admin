@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import leagueCategories from "@/data/jsons/league_categories.json";
+import { RichTextField } from "@/components/RichTextEditor";
 
 interface CategoryForCreation {
   category_name: string;
@@ -122,17 +123,16 @@ export function LeagueCategorySelector({ field, error }: Props) {
           <CardContent className="p-0 space-y-4">
             <div className="space-y-1">
               <FormLabel>Category Format</FormLabel>
-              <Textarea
-                required
-                placeholder="Category format"
+              <RichTextField
                 value={category.category_format}
-                onChange={(e) =>
+                onChange={(val) =>
                   updateCategory(category.category_name, {
-                    category_format: e.target.value,
+                    category_format: val,
                   })
                 }
               />
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <FormLabel>Maximum Teams</FormLabel>
@@ -152,16 +152,16 @@ export function LeagueCategorySelector({ field, error }: Props) {
               <div className="space-y-1">
                 <FormLabel>Entrance Fee (₱)</FormLabel>
                 <Input
-                    required
-                    type="number"
-                    min={0}
-                    placeholder="Entrance fee"
-                    onChange={(e) =>
-                      updateCategory(category.category_name, {
-                        entrance_fee_amount: parseFloat(e.target.value || "0"),
-                      })
-                    }
-                  />
+                  required
+                  type="number"
+                  min={0}
+                  placeholder="Entrance fee"
+                  onChange={(e) =>
+                    updateCategory(category.category_name, {
+                      entrance_fee_amount: parseFloat(e.target.value || "0"),
+                    })
+                  }
+                />
               </div>
             </div>
           </CardContent>

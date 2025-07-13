@@ -4,6 +4,16 @@ export type LeagueType = {
     status: string
 }
 
+export type LeagueTeamSubmission = {
+  readonly league_team_id: string;
+  readonly team_id: string;
+  team_logo_url: boolean;
+  team_name: string;
+  amount_paid: number;
+  payment_status: string;
+  status: string;
+};
+
 export type LeagueResourceType = {
   league_resource_id: string
   league_id: string
@@ -28,4 +38,13 @@ export type RefereeType = {
     referee_full_name: string,
     referee_address: string,
     referee_contact_number: string,
+}
+
+export type LeagueTeamType = {
+
+}
+
+export type LeagueMatchTeamBasicInfoType = {
+    team_name: string;
+    team_logo_url: string;
 }

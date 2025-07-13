@@ -1,104 +1,14 @@
 "use client"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import React from "react"
+import React, { useState } from "react"
 import { TableTeamSubmission } from "./table"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import Link from "next/link"
-import { useLeagueMeta } from "@/lib/stores/useLeagueMeta"
-import { CircleX } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { NoLeagueFoundAlert } from "@/components/alerts"
-
-export type TeamSubmission = {
-  team_id: string
-  team_name: string
-  status: "pending" | "processing" | "success" | "failed"
-  ammount: number,
-  player_count: number,
-}
-
-const data: TeamSubmission[] = [
-  {
-    team_id: "1",
-    team_name: "Falcons",
-    status: "success",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "2",
-    team_name: "Eagles",
-    status: "pending",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "3",
-    team_name: "Wolves",
-    status: "processing",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "4",
-    team_name: "Sharks",
-    status: "failed",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "5",
-    team_name: "Tigers",
-    status: "success",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "6",
-    team_name: "Lions",
-    status: "pending",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "7",
-    team_name: "Panthers",
-    status: "processing",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "8",
-    team_name: "Hawks",
-    status: "success",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "9",
-    team_name: "Cobras",
-    status: "failed",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "10",
-    team_name: "Rhinos",
-    status: "success",
-    ammount: 10,
-    player_count: 12
-  },
-  {
-    team_id: "11",
-    team_name: "CCS",
-    status: "success",
-    ammount: 10,
-    player_count: 12
-  },
-]
+import { NoLeagueFoundAlert, SmallLoadingAlert } from "@/components/alerts"
+import { useLeagueTeam } from "@/hooks/useLeagueTeam"
+import { PaymentSheet } from "./sheet"
 export default function TeamSubmissionPage() {
-  const { leagueMeta } = useLeagueMeta()
+  const { leagueTeam, refetchTeamResource } = useLeagueTeam()
+  const isLoading = false;
 
   const header = (
     <header className="sticky top-0 z-10 bg-background border-b flex items-center gap-2 py-1">
@@ -118,10 +28,12 @@ export default function TeamSubmissionPage() {
     <SidebarInset>
       <div className="flex flex-col h-screen w-full overflow-x-hidden overflow-y-auto">
         {header}
-        <div className="flex flex-col gap-4 px-4 pb-4">
-          {!leagueMeta && <NoLeagueFoundAlert/>}
+        <div className="flex flex-col gap-4 px-4 py-4">
+          {isLoading && <SmallLoadingAlert description="Loading"/>}
+          {!leagueTeam && <NoLeagueFoundAlert />}
 
-          {leagueMeta && <TableTeamSubmission data={data} />}
+          <PaymentSheet />
+          {leagueTeam && <TableTeamSubmission data={leagueTeam ?? []} refresh={refetchTeamResource}/>}
         </div>
       </div>
     </SidebarInset>

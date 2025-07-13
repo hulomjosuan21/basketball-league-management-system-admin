@@ -6,41 +6,24 @@ import { Input } from '@/components/ui/input'
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { CircleQuestionMark, Loader2Icon } from 'lucide-react'
 import { CourtType, LeagueResourceType, RefereeType, SponsorType } from '@/models/league'
-import { useLeagueMeta } from '@/lib/stores/useLeagueMeta'
-import { useQuery } from '@tanstack/react-query'
-import { fetchLeagueResource, updateLeagueResource } from '@/services/league-service'
+import { updateLeagueResource } from '@/services/league-service'
 import { useHandleErrorWithToast } from '@/lib/utils/handleError'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import { queryClient } from '@/lib/queryClient'
 import { ErrorAlert, LoadingAlert } from '@/components/alerts'
 import { EditableTable } from './table'
 import {
   ColumnDef,
-  ColumnFiltersState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-  VisibilityState,
 } from "@tanstack/react-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from '@/components/ui/separator'
 import { TableHeaderWithHelper } from '@/components/table-header-with-helper'
+import { useLeagueResource } from '@/hooks/useLeagueResource'
 
 export default function LeagueResourcePage() {
-  const { leagueMeta } = useLeagueMeta()
+  const { leagueMeta, leagueResource, leagueResourceLoading, leagueResourceError, refetchLeagueResource } = useLeagueResource()
   const handleError = useHandleErrorWithToast()
   const [showInfo, setShowInfo] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['league-resource'],
-    queryFn: () => fetchLeagueResource(leagueMeta.league_meta?.league_id),
-    staleTime: 5 * 60_000,
-  })
   const initialCourts = useRef<CourtType[]>([])
   const initialReferees = useRef<RefereeType[]>([])
   const initialSponsors = useRef<SponsorType[]>([])
@@ -108,7 +91,7 @@ export default function LeagueResourcePage() {
         data: payload,
       })
 
-      queryClient.invalidateQueries({ queryKey: ['league-resource'] })
+      refetchLeagueResource()
       setHasChanges(false)
       toast.success("Successfully updated league resources.")
     } catch (e) {
@@ -119,8 +102,8 @@ export default function LeagueResourcePage() {
   }
 
   useEffect(() => {
-    if (data) {
-      const { league_courts = [], league_referees = [], league_sponsors = [] } = data
+    if (leagueResource) {
+      const { league_courts = [], league_referees = [], league_sponsors = [] } = leagueResource
 
       setCourts(league_courts)
       setReferees(league_referees)
@@ -131,7 +114,7 @@ export default function LeagueResourcePage() {
         initialSponsors.current = JSON.parse(JSON.stringify(league_sponsors))
       }
     }
-  }, [data])
+  }, [leagueResource])
 
   const courtColumns: ColumnDef<CourtType>[] = [
     {
@@ -288,15 +271,15 @@ export default function LeagueResourcePage() {
           {showInfo && <div className="text-muted-foreground text-sm">
             This section provides the essential data related to a specific league's operational setup. It includes information about the courts where games will be held, the referees who will officiate, and the sponsors supporting the league. This data helps administrators manage and organize league activities effectively.
           </div>}
-          {isLoading && <LoadingAlert title="Fetching League Resource..." description="Please wait while we load the league information." />}
-          {error && <ErrorAlert errorMessage={`Failed to fetch league meta: ${error.message}`} />}
-          {!isLoading && !error && (
+          {leagueResourceLoading && <LoadingAlert title="Fetching League Resource..." description="Please wait while we load the league information." />}
+          {leagueResourceError && <ErrorAlert errorMessage={`Failed to fetch league meta: ${leagueResourceError.message}`} />}
+          {!leagueResourceLoading && !leagueResourceError && leagueMeta && (
             <Tabs defaultValue="court">
               <div className="flex items-center justify-between">
                 <TabsList>
                   <TabsTrigger value="court">Court</TabsTrigger>
-                  <TabsTrigger value="sponsors">Sponsors</TabsTrigger>
                   <TabsTrigger value="referee">Referee</TabsTrigger>
+                  <TabsTrigger value="sponsors">Sponsors</TabsTrigger>
                 </TabsList>
                 {hasChanges && (
                   <Button onClick={handleSave} disabled={isUpdating} size={'sm'}>

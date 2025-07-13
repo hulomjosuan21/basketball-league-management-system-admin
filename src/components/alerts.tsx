@@ -13,6 +13,13 @@ export const LoadingAlert = ({title, description}:{title: string, description: s
     </Alert>
 )
 
+export const SmallLoadingAlert = ({ description }: { description: string }) => (
+  <Alert className="flex items-center gap-2 p-1 h-8 text-sm">
+    <Loader2Icon className="h-3 w-3 animate-spin text-muted-foreground" />
+    <AlertDescription className="p-0 m-0 leading-none">{description}</AlertDescription>
+  </Alert>
+);
+
 export const ErrorAlert = ({ errorMessage }: { errorMessage: string }) => (
     <Alert variant="destructive">
         <CircleX />

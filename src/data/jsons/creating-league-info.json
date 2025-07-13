@@ -44,11 +44,6 @@
         },
         {
             "prefix": "9",
-            "title": "Sponsors (Optional)",
-            "description": "You may list any sponsors supporting the league (Example: McDo, CRMC,). This field is optional."
-        },
-        {
-            "prefix": "10",
             "title": "Categories",
             "description": "Add one or more categories/divisions for your league. Each must include name, format, maximum number of teams, and entrance fee. The entrance fee can also be set to ₱0 if you want to make it free."
         }

@@ -1,0 +1,217 @@
+'use client'
+
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage
+} from "@/components/ui/form"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useDropzone } from "react-dropzone"
+import Cropper from "react-easy-crop"
+import { useCallback, useEffect, useState } from "react"
+import { ImageUp, Link } from "lucide-react"
+
+interface ImageUploadFieldProps {
+  name: string
+  label?: string
+  aspect?: number // e.g. 1 (square), 16/9, etc.
+  iconOnly?: boolean
+}
+
+export function ImageUploadField({ name, label, aspect = 1, iconOnly }: ImageUploadFieldProps) {
+  const [mode, setMode] = useState<"upload" | "embed">("upload")
+  const [imageSrc, setImageSrc] = useState<string | null>(null)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+  const [isClient, setIsClient] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
+    if (!file) return
+    setSelectedFile(file)
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      setImageSrc(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+  }, [])
+
+  const createCroppedImage = async () => {
+    if (!imageSrc || !croppedAreaPixels) return null
+    const image = new Image()
+    image.src = imageSrc
+    await new Promise((resolve) => (image.onload = resolve))
+
+    const canvas = document.createElement("canvas")
+    canvas.width = croppedAreaPixels.width
+    canvas.height = croppedAreaPixels.height
+    const ctx = canvas.getContext("2d")!
+
+    ctx.drawImage(
+      image,
+      croppedAreaPixels.x,
+      croppedAreaPixels.y,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height,
+      0,
+      0,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height
+    )
+
+    return new Promise<File | null>((resolve) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(new File([blob], "cropped.jpg", { type: "image/jpeg" }))
+        } else {
+          resolve(null)
+        }
+      }, "image/jpeg")
+    })
+  }
+
+  return (
+    <FormField
+      name={name}
+      render={({ field }) => {
+        useEffect(() => {
+          if (mode === "upload" && selectedFile && croppedAreaPixels) {
+            createCroppedImage().then((croppedFile) => {
+              if (croppedFile) field.onChange(croppedFile)
+            })
+          } else if (mode === "embed" && imageSrc) {
+            field.onChange(imageSrc)
+          }
+        }, [selectedFile, imageSrc, mode, croppedAreaPixels])
+
+        return (
+          <FormItem>
+            {label && <FormLabel>{label}</FormLabel>}
+            <FormControl>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  {iconOnly ? (
+                    <Button variant="outline" size="icon">
+                      <ImageUp className="w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button variant="outline" className="w-full justify-start gap-2">
+                      <ImageUp className="w-4 h-4" />
+                      {imageSrc ? (
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={imageSrc}
+                            alt="Preview"
+                            className="h-6 w-6 rounded-sm object-cover border"
+                          />
+                          <span className="truncate max-w-[150px] text-sm text-muted-foreground">
+                            Image selected
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Add an image</span>
+                      )}
+                    </Button>
+                  )}
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-96 p-4 space-y-3" align="start">
+                  <div className="flex space-x-2">
+                    <Button
+                      type="button"
+                      variant={mode === "upload" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setMode("upload")}
+                    >
+                      Upload
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={mode === "embed" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setMode("embed")}
+                    >
+                      Embed link
+                    </Button>
+                  </div>
+
+                  {mode === "upload" && (
+                    <>
+                      <Dropzone onDrop={onDrop} />
+                      {isClient && imageSrc && (
+                        <div className="relative h-60 w-full bg-muted rounded-md overflow-hidden">
+                          <Cropper
+                            image={imageSrc}
+                            crop={crop}
+                            zoom={zoom}
+                            aspect={aspect}
+                            onCropChange={setCrop}
+                            onCropComplete={(_, croppedAreaPixels) => {
+                              setCroppedAreaPixels(croppedAreaPixels)
+                            }}
+                            onZoomChange={setZoom}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {mode === "embed" && (
+                    <>
+                      <Input
+                        placeholder="Paste image link"
+                        value={typeof field.value === "string" ? field.value : ""}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          setImageSrc(val)
+                          setSelectedFile(null)
+                        }}
+                      />
+                      {imageSrc && (
+                        <img src={imageSrc} alt="Preview" className="mt-2 max-h-60 rounded-md" />
+                      )}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )
+      }}
+    />
+  )
+}
+
+function Dropzone({ onDrop }: { onDrop: (files: File[]) => void }) {
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "image/*": [] },
+    multiple: false
+  })
+
+  return (
+    <div
+      {...getRootProps()}
+      className="border border-dashed border-muted p-6 text-center rounded-md cursor-pointer hover:bg-muted/30"
+    >
+      <input {...getInputProps()} />
+      {isDragActive ? <p>Drop the image here…</p> : <p>Drag & drop or click to upload</p>}
+    </div>
+  )
+}

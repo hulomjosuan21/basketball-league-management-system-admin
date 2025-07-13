@@ -1,5 +1,5 @@
 import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
-import logoMain from "../../assets/logo-main.png"
+import logoMain from "../../assets/logo-main.png";
 import {
   Accordion,
   AccordionContent,
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/sheet";
 import { ModeToggle } from "./toggle-theme";
 import Image, { StaticImageData } from "next/image";
-import { log } from "console";
 
 interface MenuItem {
   title: string;
@@ -57,10 +56,10 @@ const PublicNavbar = ({
       url: "#",
       items: [
         {
-          title: "Help Center",
+          title: "Test Page",
           description: "Get all the answers you need right here",
           icon: <Zap className="size-5 shrink-0" />,
-          url: "#",
+          url: "/test",
         },
         {
           title: "Contact Us",
@@ -91,13 +90,19 @@ const PublicNavbar = ({
         <nav className="hidden lg:flex items-center justify-between">
           <div className="flex items-center gap-6">
             <a href={logo.url} className="flex items-center gap-2">
-              <Image src={logo.src} alt="Logo" className="h-8 w-8" width={32} height={32} />
+              <Image
+                src={logo.src}
+                alt="Logo"
+                className="h-8 w-8"
+                width={32}
+                height={32}
+              />
               <span className="text-lg font-semibold tracking-tighter">
                 {logo.title}
               </span>
             </a>
-            <NavigationMenu>
-              <NavigationMenuList>
+            <NavigationMenu className="relative z-50">
+              <NavigationMenuList className="flex gap-4 items-center">
                 {menu.map((item) => renderMenuItem(item))}
               </NavigationMenuList>
             </NavigationMenu>
@@ -110,7 +115,13 @@ const PublicNavbar = ({
         {/* Mobile Navbar */}
         <div className="flex items-center justify-between lg:hidden">
           <a href={logo.url} className="flex items-center gap-2">
-            <Image src={logo.src} alt="Logo" className="h-8 w-8" width={32} height={32} />
+            <Image
+              src={logo.src}
+              alt="Logo"
+              className="h-8 w-8"
+              width={32}
+              height={32}
+            />
           </a>
           <Sheet>
             <SheetTrigger asChild>
@@ -122,7 +133,13 @@ const PublicNavbar = ({
               <SheetHeader>
                 <SheetTitle>
                   <a href={logo.url} className="flex items-center gap-2">
-                    <Image src={logo.src} alt="Logo" className="h-8 w-8" width={32} height={32} />
+                    <Image
+                      src={logo.src}
+                      alt="Logo"
+                      className="h-8 w-8"
+                      width={32}
+                      height={32}
+                    />
                   </a>
                 </SheetTitle>
               </SheetHeader>
@@ -151,12 +168,28 @@ const renderMenuItem = (item: MenuItem) => {
     return (
       <NavigationMenuItem key={item.title}>
         <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
-        <NavigationMenuContent className="grid gap-2 p-4 w-[400px] grid-cols-1 sm:grid-cols-2 bg-popover text-popover-foreground">
-          {item.items.map((subItem) => (
-            <NavigationMenuLink asChild key={subItem.title} className="w-full">
-              <SubMenuLink item={subItem} />
-            </NavigationMenuLink>
-          ))}
+        <NavigationMenuContent className="min-w-[400px] p-4 bg-popover text-popover-foreground rounded-md shadow-md">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {item.items.map((subItem) => (
+              <NavigationMenuLink
+                key={subItem.title}
+                href={subItem.url}
+                className="flex gap-4 rounded-md p-3 transition-colors hover:bg-muted hover:text-accent-foreground"
+              >
+                {subItem.icon && (
+                  <div className="text-foreground">{subItem.icon}</div>
+                )}
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">{subItem.title}</span>
+                  {subItem.description && (
+                    <span className="text-sm text-muted-foreground">
+                      {subItem.description}
+                    </span>
+                  )}
+                </div>
+              </NavigationMenuLink>
+            ))}
+          </div>
         </NavigationMenuContent>
       </NavigationMenuItem>
     );
@@ -173,7 +206,6 @@ const renderMenuItem = (item: MenuItem) => {
     </NavigationMenuItem>
   );
 };
-
 const renderMobileMenuItem = (item: MenuItem) => {
   if (item.items) {
     return (
@@ -200,16 +232,16 @@ const renderMobileMenuItem = (item: MenuItem) => {
 const SubMenuLink = ({ item }: { item: MenuItem }) => {
   return (
     <a
-      className="flex gap-4 rounded-md p-3 transition-colors hover:bg-muted hover:text-accent-foreground"
       href={item.url}
+      className="flex gap-4 rounded-md p-3 transition-colors hover:bg-muted hover:text-accent-foreground"
     >
-      <div className="text-foreground">{item.icon}</div>
-      <div>
-        <div className="text-sm font-semibold">{item.title}</div>
+      {item.icon && <div className="text-foreground">{item.icon}</div>}
+      <div className="flex flex-col">
+        <span className="text-sm font-semibold">{item.title}</span>
         {item.description && (
-          <p className="text-sm leading-snug text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {item.description}
-          </p>
+          </span>
         )}
       </div>
     </a>

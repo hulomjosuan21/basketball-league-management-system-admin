@@ -7,7 +7,8 @@ import axiosClient from "@/lib/axiosClient";
 import { TokenMissingError } from "@/lib/errors";
 import { logout } from "@/lib/serverLogout";
 import { LeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { LeagueResourceType, LeagueType } from "@/models/league";
+import { LeagueResourceType, LeagueTeamSubmission, LeagueType } from "@/models/league";
+import { MatchTeamInfo } from "@/models/match";
 
 export async function createNewLeague(formData: FormData) {
   const admin = await getLeagueAdminFromToken();
@@ -39,7 +40,7 @@ export async function fetchLeagueResource(league_id?: string) {
   return apiResponse.payload
 }
 
-export const fetchLeagueMeta = async (): Promise<LeagueMeta> => {
+export async function fetchLeagueMeta(): Promise<LeagueMeta> {
   try {
     const admin = await getLeagueAdminFromToken()
 
@@ -64,4 +65,23 @@ export const fetchLeagueMeta = async (): Promise<LeagueMeta> => {
     }
     throw error
   }
+}
+
+export async function fetchLeagueTeams(league_id?: string) {
+  if(!league_id) throw new Error("No found league!")
+  const response = await axiosClient.client.get(`/league/league-team?league_id=${league_id}&category_id=category-7141d300-c8e0-4edb-8421-63f67fb52b5b`);
+
+  const apiResponse = ApiResponse.fromJson<LeagueTeamSubmission[]>(response.data);
+
+  return apiResponse.payload 
+}
+
+export async function generateLeaguePDF(): Promise<string> {
+  const response = await axiosClient.client.get(`/league/generate-pdf`, {
+    responseType: "blob",
+  });
+
+  const blob = new Blob([response.data], { type: "application/pdf" });
+  const blobUrl = URL.createObjectURL(blob);
+  return blobUrl;
 }

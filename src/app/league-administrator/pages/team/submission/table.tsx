@@ -13,7 +13,7 @@ import {
     VisibilityState,
 } from "@tanstack/react-table"
 import { useEffect, useState } from "react"
-import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -21,6 +21,7 @@ import {
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -32,9 +33,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { TeamSubmission } from "./page"
-
-export const columns: ColumnDef<TeamSubmission>[] = [
+import { LeagueTeamSubmission } from "@/models/league"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
+import { PaymentStatus, PaymentStatusBadge, SubmissionStatus, SubmissionStatusBadge } from "./badges"
+import { usePaymentSheetStore } from "./store"
+export const columns: ColumnDef<LeagueTeamSubmission>[] = [
     {
         id: "select",
         header: ({ table }) => (
@@ -58,22 +62,44 @@ export const columns: ColumnDef<TeamSubmission>[] = [
         enableHiding: false,
     },
     {
+        accessorKey: "team_logo_url",
+        header: "Logo",
+        cell: ({ row }) => {
+            const logo = row.getValue("team_logo_url") as string
+            const team = row.original.team_name
+
+            return (
+                <Avatar className="h-10 w-10 rounded-md overflow-hidden">
+                    <AvatarImage src={logo} alt={team} className="object-cover" />
+                    <AvatarFallback className="text-xs">T</AvatarFallback>
+                </Avatar>
+            )
+        },
+        enableSorting: false,
+    },
+    {
         accessorKey: "team_name",
         header: "Team Name",
     },
     {
+        accessorKey: "payment_status",
+        header: "Fee Status", cell: ({ row }) => {
+            const status = row.getValue("payment_status")
+            return <PaymentStatusBadge status={status} />
+        },
+    },
+    {
         accessorKey: "status",
-        header: "Status",
+        header: "Submission Status", cell: ({ row }) => {
+            const status = row.getValue("status")
+            return <SubmissionStatusBadge status={status} />
+        },
     },
     {
-        accessorKey: "player_count",
-        header: "Player count",
-    },
-    {
-        accessorKey: "ammount",
+        accessorKey: "amount_paid",
         header: () => <div className="text-right">Amount</div>,
         cell: ({ row }) => {
-            const value = row.getValue("ammount") as number
+            const value = row.getValue("amount_paid") as number
             const formatted = new Intl.NumberFormat("en-US", {
                 style: "currency",
                 currency: "PHP",
@@ -85,7 +111,9 @@ export const columns: ColumnDef<TeamSubmission>[] = [
         id: "actions",
         enableHiding: false,
         cell: ({ row }) => {
+            const { openSheet } = usePaymentSheetStore()
             const submission = row.original
+
             return (
                 <div className="flex justify-end">
                     <DropdownMenu>
@@ -96,6 +124,12 @@ export const columns: ColumnDef<TeamSubmission>[] = [
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onClick={() => openSheet({ id: submission.league_team_id, description: submission.team_name })}
+                            >
+                                Set Manual Payment
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem>Accept</DropdownMenuItem>
                             <DropdownMenuItem>Remove</DropdownMenuItem>
                         </DropdownMenuContent>
@@ -103,10 +137,28 @@ export const columns: ColumnDef<TeamSubmission>[] = [
                 </div>
             )
         },
-    },
+    }
 ]
 
-export function TableTeamSubmission({ data }: { data: TeamSubmission[] }) {
+type TableTeamSubmission = {
+    data: LeagueTeamSubmission[],
+    refresh?: () => Promise<any>,
+}
+
+export function TableTeamSubmission({ data, refresh }: TableTeamSubmission) {
+
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    const handleRefresh = async () => {
+        if (!refresh) return;
+        setIsRefreshing(true);
+        try {
+            await refresh();
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -137,7 +189,7 @@ export function TableTeamSubmission({ data }: { data: TeamSubmission[] }) {
 
     return (
         <div className="w-full">
-            <div className="flex items-center py-4">
+            <div className="flex items-center justify-between py-4">
                 <Input
                     placeholder="Filter team name..."
                     value={(table.getColumn("team_name")?.getFilterValue() as string) ?? ""}
@@ -146,18 +198,28 @@ export function TableTeamSubmission({ data }: { data: TeamSubmission[] }) {
                     }
                     className="max-w-sm"
                 />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                            Columns <ChevronDown />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {table
-                            .getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => {
-                                return (
+
+                <div className="flex items-center gap-2">
+                    {refresh && <Button onClick={handleRefresh} size={'sm'} variant={'secondary'}>
+                        <RefreshCw
+                            className={cn(
+                                "mr-1 h-4 w-4 transition-transform",
+                                isRefreshing && "animate-spin"
+                            )}
+                        />
+                        Refresh
+                    </Button>}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                Columns <ChevronDown />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {table
+                                .getAllColumns()
+                                .filter((column) => column.getCanHide())
+                                .map((column) => (
                                     <DropdownMenuCheckboxItem
                                         key={column.id}
                                         className="capitalize"
@@ -168,10 +230,10 @@ export function TableTeamSubmission({ data }: { data: TeamSubmission[] }) {
                                     >
                                         {column.id}
                                     </DropdownMenuCheckboxItem>
-                                )
-                            })}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                                ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
             <div className="rounded-md border">
@@ -251,3 +313,7 @@ export function TableTeamSubmission({ data }: { data: TeamSubmission[] }) {
         </div>
     )
 }
+function useSheetStore(): { openSheet: any } {
+    throw new Error("Function not implemented.")
+}
+
