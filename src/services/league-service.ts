@@ -26,13 +26,13 @@ export async function createNewLeague(formData: FormData) {
   return apiResponse.toJSON();
 }
 
-export async function updateLeagueResource({data,league_id}:{data: Partial<LeagueResourceType>, league_id?: string}) {
-  if(!league_id) throw new Error("No found league!")
-  await axiosClient.client.put(`/league/resource/update/${league_id}`,data);
+export async function updateLeagueResource({ data, league_id }: { data: Partial<LeagueResourceType>, league_id?: string }) {
+  if (!league_id) throw new Error("No found league!")
+  await axiosClient.client.put(`/league/resource/update/${league_id}`, data);
 }
 
 export async function fetchLeagueResource(league_id?: string) {
-  if(!league_id) throw new Error("No found league!")
+  if (!league_id) throw new Error("No found league!")
   const response = await axiosClient.client.get(`/league/resource/${league_id}`);
 
   const apiResponse = ApiResponse.fromJson<LeagueResourceType>(response.data);
@@ -68,12 +68,12 @@ export async function fetchLeagueMeta(): Promise<LeagueMeta> {
 }
 
 export async function fetchLeagueTeams(league_id?: string) {
-  if(!league_id) throw new Error("No found league!")
+  if (!league_id) throw new Error("No found league!")
   const response = await axiosClient.client.get(`/league/league-team?league_id=${league_id}&category_id=category-7141d300-c8e0-4edb-8421-63f67fb52b5b`);
 
   const apiResponse = ApiResponse.fromJson<LeagueTeamSubmission[]>(response.data);
 
-  return apiResponse.payload 
+  return apiResponse.payload
 }
 
 export async function generateLeaguePDF(): Promise<string> {
@@ -84,4 +84,16 @@ export async function generateLeaguePDF(): Promise<string> {
   const blob = new Blob([response.data], { type: "application/pdf" });
   const blobUrl = URL.createObjectURL(blob);
   return blobUrl;
+}
+
+export async function updateLeagueTeam({ league_team_id, fields }: { league_team_id: string, fields: Partial<LeagueTeamSubmission> }) {
+  const response = await axiosClient.client.put(`/league/league-team/update/${league_team_id}`, JSON.stringify(fields), {
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+
+  const apiResponse = ApiResponse.fromJsonNoPayload<void>(response.data);
+
+  return apiResponse.toJSON();
 }

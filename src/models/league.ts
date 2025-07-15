@@ -12,6 +12,8 @@ export type LeagueTeamSubmission = {
   amount_paid: number;
   payment_status: string;
   status: string;
+  email: string;
+  contact_number: string;
 };
 
 export type LeagueResourceType = {

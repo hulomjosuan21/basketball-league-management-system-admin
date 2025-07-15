@@ -82,6 +82,14 @@ export const columns: ColumnDef<LeagueTeamSubmission>[] = [
         header: "Team Name",
     },
     {
+        accessorKey: "email",
+        header: "Email"
+    },
+    {
+        accessorKey: "contact_number",
+        header: "Contact #"
+    },
+    {
         accessorKey: "payment_status",
         header: "Fee Status", cell: ({ row }) => {
             const status = row.getValue("payment_status")
@@ -125,7 +133,7 @@ export const columns: ColumnDef<LeagueTeamSubmission>[] = [
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                                onClick={() => openSheet({ id: submission.league_team_id, description: submission.team_name })}
+                                onClick={() => openSheet({ id: submission.league_team_id, description: submission.team_name, amount_paid: submission.amount_paid, payment_status: submission.payment_status })}
                             >
                                 Set Manual Payment
                             </DropdownMenuItem>
@@ -282,7 +290,7 @@ export function TableTeamSubmission({ data, refresh }: TableTeamSubmission) {
                 </Table>
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pb-4">
+            <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="text-muted-foreground flex-1 text-sm">
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}
                     {table.getFilteredRowModel().rows.length} row(s) selected.
@@ -313,7 +321,5 @@ export function TableTeamSubmission({ data, refresh }: TableTeamSubmission) {
         </div>
     )
 }
-function useSheetStore(): { openSheet: any } {
-    throw new Error("Function not implemented.")
-}
+
 

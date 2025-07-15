@@ -30,10 +30,9 @@ export default function TeamSubmissionPage() {
         {header}
         <div className="flex flex-col gap-4 px-4 py-4">
           {isLoading && <SmallLoadingAlert description="Loading"/>}
-          {!leagueTeam && <NoLeagueFoundAlert />}
 
           <PaymentSheet />
-          {leagueTeam && <TableTeamSubmission data={leagueTeam ?? []} refresh={refetchTeamResource}/>}
+          <TableTeamSubmission data={leagueTeam ?? []} refresh={refetchTeamResource}/>
         </div>
       </div>
     </SidebarInset>
