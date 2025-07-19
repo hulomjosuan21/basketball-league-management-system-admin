@@ -58,7 +58,7 @@ export default function CreateLeaguePage() {
 
                     {error && <ErrorAlert errorMessage={`Error: ${error.message}`} />}
 
-                    {admin && !isLoading && !error && <CreateLeagueForm hasLeague={leagueMeta.has_league} />}
+                    {admin && !isLoading && !error && <CreateLeagueForm hasLeague={!leagueMeta.has_league} />}
                 </div>
             </div>
         </SidebarInset>

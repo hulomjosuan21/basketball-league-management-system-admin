@@ -10,7 +10,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table"
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { MatchTeam, useMatchTeamStore } from "./matchTeamStore"
+import { useMatchTeamStore } from "./matchTeamStore"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,8 @@ import {
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useMatchTeams } from "@/hooks/useMatchTeam"
+import { MatchTeam } from "@/models/league"
 
 export const columns = ({
     isTeamSelected,
@@ -54,15 +56,15 @@ export const columns = ({
             id: "team",
             header: () => "Team",
             cell: ({ row }) => {
-                const teamName = row.original.team_name
+                const team = row.original
 
                 return (
                     <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8 rounded-md overflow-hidden">
-                            <AvatarImage src={''} alt={teamName} className="object-cover" />
+                        <Avatar className="h-8 w-8 rounded-sm overflow-hidden">
+                            <AvatarImage src={team.team_logo_url} alt={team.team_name} className="object-cover" />
                             <AvatarFallback className="text-xs">T</AvatarFallback>
                         </Avatar>
-                        <span>{teamName}</span>
+                        <span>{team.team_name}</span>
                     </div>
                 )
             },
@@ -89,15 +91,7 @@ export const columns = ({
     ]
 
 export function MatchTeamTable({ category_id }: { category_id: string }) {
-    const data: MatchTeam[] = useMemo(
-        () => [
-            { league_team_id: "team-1", team_name: "Team 1" },
-            { league_team_id: "team-2", team_name: "Team 2" },
-            { league_team_id: "team-3", team_name: "Team 3" },
-            { league_team_id: "team-4", team_name: "Team 4" },
-        ],
-        []
-    )
+    const {matchTeams: data, matchTeamsLoading} = useMatchTeams(category_id)
 
     const { homeTeam, awayTeam, setHomeTeam, setAwayTeam } = useMatchTeamStore()
     const [selectionOrder, setSelectionOrder] = useState<string[]>([])
@@ -210,7 +204,7 @@ export function MatchTeamTable({ category_id }: { category_id: string }) {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
-                                    No Teams.
+                                    {matchTeamsLoading ? 'Loading...' : 'No Teams.'}
                                 </TableCell>
                             </TableRow>
                         )}

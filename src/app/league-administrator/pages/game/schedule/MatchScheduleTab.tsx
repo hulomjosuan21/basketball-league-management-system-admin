@@ -11,7 +11,7 @@ export default function MatchScheduleTab({value}:MatchScheduleTab){
     return (
         <TabsContent value={value}>
             <MatchSchedulerSection/>
-            <MatchTeamTable category_id=""/>
+            <MatchTeamTable category_id={value}/>
         </TabsContent>
     )
 }

@@ -1,3 +1,5 @@
+import { MatchTeam } from "./league";
+
 export function isDifferent<T>(a: T, b: T): boolean {
     return a !== b;
 }
@@ -26,12 +28,6 @@ export type BracketSideType = "left" | "right" | "center" | null
 
 export type PairingMethod = "manual" | "random" | "seeded" | null
 
-export type MatchTeamInfo = {
-    team_name: string
-    team_logo_url: string
-    seed_number: number | null
-}
-
 export interface MatchType {
   // 🔑 Core Identification
   match_id: string
@@ -40,10 +36,10 @@ export interface MatchType {
 
   // 👥 Team Information
   home_team_id: string
-  home_team: MatchTeamInfo
+  home_team: MatchTeam
 
   away_team_id: string
-  away_team: MatchTeamInfo
+  away_team: MatchTeam
 
   home_team_score: number | null
   away_team_score: number | null
@@ -131,8 +127,8 @@ export class MatchModel implements MatchType {
     match_id: string
     home_team_id: string
     away_team_id: string
-    home_team: MatchTeamInfo
-    away_team: MatchTeamInfo
+    home_team: MatchTeam
+    away_team: MatchTeam
     home_team_score: number | null
     away_team_score: number | null
     scheduled_date: Date

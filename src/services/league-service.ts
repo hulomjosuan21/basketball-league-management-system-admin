@@ -1,14 +1,12 @@
 
 "use server"
-import { CreateLeagueFormValues } from "@/app/league-administrator/pages/league/create/create-league-form";
 import { ApiResponse } from "@/lib/apiResponse";
 import { getLeagueAdminFromToken } from "@/lib/auth";
 import axiosClient from "@/lib/axiosClient";
 import { TokenMissingError } from "@/lib/errors";
 import { logout } from "@/lib/serverLogout";
 import { LeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { LeagueCategories, LeagueResourceType, LeagueTeamSubmission, LeagueType } from "@/models/league";
-import { MatchTeamInfo } from "@/models/match";
+import { LeagueCategories, LeagueResourceType, LeagueTeamSubmission, LeagueType, MatchTeam } from "@/models/league";
 
 export async function createNewLeague(formData: FormData) {
   const admin = await getLeagueAdminFromToken();
@@ -106,8 +104,12 @@ export async function updateLeagueBanner({ league_id, formData }: { league_id: s
 
 export async function fetchCurrentLeagueQueries(league_id: string) {
   const response = await axiosClient.client.get(`/league/current/categories/${league_id}`)
-  const data = response.data;
-  const categories = data.redirect as LeagueCategories[];
+  const apiResponse = ApiResponse.fromJson<LeagueCategories[]>(response.data)
+  return apiResponse.payload;
+}
 
-  return categories;
+export async function fetchMatchTeamsByCategories(league_id: string, category_id: string) {
+  const response = await axiosClient.client.get(`/match/teams/${league_id}/${category_id}`)
+  const apiResponse = ApiResponse.fromJson<MatchTeam[]>(response.data)
+  return apiResponse.payload;
 }

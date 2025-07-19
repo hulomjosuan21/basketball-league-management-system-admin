@@ -1,9 +1,5 @@
+import { MatchTeam } from '@/models/league'
 import { create } from 'zustand'
-
-export type MatchTeam = {
-  league_team_id: string
-  team_name: string
-}
 
 type MatchTeamState = {
   homeTeam: MatchTeam | null

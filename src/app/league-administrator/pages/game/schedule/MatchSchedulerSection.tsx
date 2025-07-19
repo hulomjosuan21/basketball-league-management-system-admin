@@ -29,40 +29,26 @@ import { useLeagueResource } from '@/hooks/useLeagueResource'
 import { MultiSelect } from '@/components/MultiSelect'
 import { ErrorAlert, SmallLoadingAlert } from '@/components/alerts'
 import { useMatchTeamStore } from './matchTeamStore'
+import { MatchTeam } from '@/models/league'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
-const schema = z.object({
-    home_team_id: z.string().min(1, 'Select Home Team'),
-    away_team_id: z.string().min(1, 'Select Away Team'),
+const formSchema = z.object({
     scheduled_date: z.string().min(1),
     duration_minutes: z.coerce.number().min(1),
     referees: z.array(z.string()).length(3, 'Select exactly 3 referees'),
     court: z.string().min(1),
-    category: z.string().nullable(),
-    division: z.string().nullable(),
-    league_id: z.string().nullable(),
-    round_number: z.coerce.number().nullable(),
-    bracket_side: z.enum(['LEFT', 'RIGHT']),
-    bracket_position: z.string().nullable(),
     match_notes: z.string().nullable(),
 })
 
 export default function MatchCreateForm() {
     const { homeTeam, awayTeam } = useMatchTeamStore();
     const form = useForm({
-        resolver: zodResolver(schema),
+        resolver: zodResolver(formSchema),
         defaultValues: {
-            home_team_id: '',
-            away_team_id: '',
             scheduled_date: '',
             duration_minutes: 40,
             referees: [],
             court: '',
-            category: null,
-            division: null,
-            league_id: null,
-            round_number: null,
-            bracket_side: 'LEFT',
-            bracket_position: null,
             match_notes: '',
         },
     })
@@ -76,12 +62,27 @@ export default function MatchCreateForm() {
     const refereeOptions = leagueResource?.league_referees ?? []
     const courtOptions = leagueResource?.league_courts ?? []
 
-    const onSubmit = (data: any) => {
+    const onSubmit = (data: z.infer<typeof formSchema>) => {
         console.log('Submitted Match:', data)
     }
 
     if (leagueResourceLoading) return <SmallLoadingAlert description='Loading...' />
     if (leagueResourceError) return <ErrorAlert errorMessage='Error loading resources' />
+
+    const teamCard = (t: MatchTeam) => (
+        (
+            <div className="flex items-center gap-3 justify-center">
+                <Avatar className="h-10 w-10 rounded-sm overflow-hidde">
+                    <AvatarImage src={t.team_logo_url} className="object-cover" />
+                    <AvatarFallback>{t.team_name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="text-left">
+                    <p className="text-sm font-medium leading-none">{t.team_name}</p>
+                    <p className="text-xs text-muted-foreground">#{t.league_team_id}</p>
+                </div>
+            </div>
+        )
+    )
 
     return (
         <Form {...form}>
@@ -184,23 +185,23 @@ export default function MatchCreateForm() {
                     />
 
                     <div className="md:col-span-3 flex items-center gap-4">
-                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40">
-                            <p className="font-semibold">Home Team</p>
+                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
+                            <p className="font-semibold mb-2">Home Team</p>
                             {homeTeam ? (
-                                <p className="mt-2 text-lg">{homeTeam.team_name} {homeTeam.league_team_id}</p>
+                                teamCard(homeTeam)
                             ) : (
-                                <p className="mt-2 text-muted-foreground text-sm">Not selected</p>
+                                <p className="text-muted-foreground text-sm">Not selected</p>
                             )}
                         </div>
 
                         <div className="w-12 text-center font-bold text-lg text-muted-foreground">V.S.</div>
 
-                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40">
-                            <p className="font-semibold">Away Team</p>
+                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
+                            <p className="font-semibold mb-2">Away Team</p>
                             {awayTeam ? (
-                                <p className="mt-2 text-lg">{awayTeam.team_name} {awayTeam.league_team_id}</p>
+                                teamCard(awayTeam)
                             ) : (
-                                <p className="mt-2 text-muted-foreground text-sm">Not selected</p>
+                                <p className="text-muted-foreground text-sm">Not selected</p>
                             )}
                         </div>
                     </div>

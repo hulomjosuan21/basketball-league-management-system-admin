@@ -1,8 +1,11 @@
+"use client"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import MatchScheduleTab from "./MatchScheduleTab"
+import { useLeagueCategories } from "@/hooks/useLeagueQueries"
 export default function MatchSchedulePage() {
+    const { leagueCategories } = useLeagueCategories()
 
     const header = (
         <header className="sticky top-0 z-10 bg-background border-b flex items-center gap-2 py-1">
@@ -20,12 +23,25 @@ export default function MatchSchedulePage() {
                 {header}
 
                 <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-                    <Tabs defaultValue="default">
-                        <TabsList className="">
-                            <TabsTrigger value="default">Default</TabsTrigger>
+                    <Tabs
+                        key={leagueCategories.map((c) => c.category_id).join('-')}
+                        defaultValue={leagueCategories[0]?.category_id}
+                        className="w-full"
+                    >
+                        <TabsList>
+                            {leagueCategories.map((category) => (
+                                <TabsTrigger
+                                    key={category.category_id}
+                                    value={category.category_id}
+                                >
+                                    {category.category_name}
+                                </TabsTrigger>
+                            ))}
                         </TabsList>
-                        <Separator className="mb-2"/>
-                        <MatchScheduleTab value={'default'}/>
+                        <Separator className="mb-2" />
+                        {leagueCategories.map((category) => (
+                            <MatchScheduleTab key={category.category_id} value={category.category_id} />
+                        ))}
                     </Tabs>
                 </div>
             </div>
