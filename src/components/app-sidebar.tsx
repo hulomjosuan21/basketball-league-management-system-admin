@@ -62,11 +62,7 @@ const data = {
                 {
                     title: "Submission",
                     url: "/league-administrator/pages/player/submission",
-                },
-                {
-                    title: "Rejected",
-                    url: "#",
-                },
+                }
             ],
         },
         {
@@ -82,10 +78,6 @@ const data = {
                 {
                     title: "Submissions",
                     url: "/league-administrator/pages/team/submission",
-                },
-                {
-                    title: "Rejected",
-                    url: "#",
                 }
             ],
         },
@@ -114,18 +106,18 @@ const data = {
             items: [
                 {
                     title: "Structure",
-                    url: "#",
+                    url: "/league-administrator/pages/league/bracket/structure",
                 },
                 {
-                    title: "Teams",
-                    url: "#",
+                    title: "Match Team",
+                    url: "/league-administrator/pages/league/bracket/match",
                 }
             ],
         }
     ],
     game: [
         {
-            title: "Schedules",
+            title: "Set Schedule",
             url: "/league-administrator/pages/game/schedule",
             icon: CalendarCheck,
         },

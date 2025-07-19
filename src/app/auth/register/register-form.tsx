@@ -1,37 +1,48 @@
 "use client"
 
 import type React from "react"
-
+import { useState } from "react"
+import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { useState } from "react"
-import { Check, ChevronsUpDown, Upload, X } from "lucide-react"
-import { z } from "zod"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Check, ChevronsUpDown, Loader2Icon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import PhoneInput from "react-phone-input-2"
 import "react-phone-input-2/lib/style.css"
+
+import { Button } from "@/components/ui/button"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+
 import { organizationTypes } from "@/constants/organization-tpes"
 import { addresses } from "@/constants/addresses"
-import ImageUploader from "@/components/image-uploader"
+import { ImageUploadField } from "@/components/ImageUploadField"
+import { registerLeagueAdmin } from "@/services/league-admin"
+import { useHandleErrorWithToast } from "@/lib/utils/handleError"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 const formSchema = z
     .object({
-        organization_logo: z.string().optional(),
+        organization_logo: z
+            .union([z.instanceof(File), z.string().url()])
+            .refine(
+                (val) => {
+                    if (val instanceof File) return val.size > 0
+                    return typeof val === "string" && val.trim().length > 0
+                },
+                { message: "Organization logo is required" }
+            ),
         organization_name: z
             .string()
             .min(4, "Organization name must be at least 4 characters")
             .max(250, "Organization name must not exceed 250 characters"),
         organization_type: z.string().min(1, "Please select an organization type"),
-        organization_address: z.tuple([z.string().min(1, "Address is required"), z.string().optional()]),
+        organization_address: z.string().min(1, "Address is required"),
         contact_number: z.string().min(1, "Contact number is required"),
         email: z
             .string()
@@ -47,17 +58,18 @@ const formSchema = z
     })
 
 export default function OrganizationForm() {
-    const [logoFile, setLogoFile] = useState<File | null>(null)
-    const [logoPreview, setLogoPreview] = useState<string>("")
     const [addressOpen, setAddressOpen] = useState(false)
+    const [isLoading, setLoading] = useState(false)
+    const handleError = useHandleErrorWithToast()
+    const router = useRouter()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            organization_logo: "",
+            organization_logo: undefined,
             organization_name: "",
             organization_type: "",
-            organization_address: ["", ""],
+            organization_address: "",
             contact_number: "",
             email: "",
             password_str: "",
@@ -65,57 +77,41 @@ export default function OrganizationForm() {
         },
     })
 
-    const handleFileUpload = (file: File) => {
-        setLogoFile(file)
-        const reader = new FileReader()
-        reader.onload = (e) => {
-            const result = e.target?.result as string
-            setLogoPreview(result)
-            form.setValue("organization_logo", result)
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        const formData = new FormData()
+        formData.append("organization_logo", values.organization_logo)
+        formData.append("organization_name", values.organization_name)
+        formData.append("organization_type", values.organization_type)
+        formData.append("organization_address", values.organization_address)
+        formData.append("contact_number", values.contact_number)
+        formData.append("email", values.email)
+        formData.append("password_str", values.password_str)
+        console.log("Submitted Form Data:")
+        console.log({
+            organization_logo: values.organization_logo,
+            organization_name: values.organization_name,
+            organization_type: values.organization_type,
+            organization_address: values.organization_address,
+            contact_number: values.contact_number,
+            email: values.email,
+            password_str: values.password_str
+        })
+        setLoading(true)
+        try {
+            const response = await registerLeagueAdmin(formData)
+            toast.success(response.message)
+            router.push('/auth/login')
+        } catch (e) {
+            handleError(e)
+        } finally {
+            setLoading(false)
         }
-        reader.readAsDataURL(file)
-    }
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        const files = Array.from(e.dataTransfer.files)
-        const imageFile = files.find((file) => file.type.startsWith("image/"))
-        if (imageFile) {
-            handleFileUpload(imageFile)
-        }
-    }
-
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-    }
-
-    const removeFile = () => {
-        setLogoFile(null)
-        setLogoPreview("")
-        form.setValue("organization_logo", "")
-    }
-
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values)
     }
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Label htmlFor="logo">Organization Logo</Label>
-                <FormField
-                    control={form.control}
-                    name="organization_logo"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Organization Logo</FormLabel>
-                            <FormControl>
-                                <ImageUploader value={field.value} onChange={field.onChange} aspectRatio={1} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <ImageUploadField name="organization_logo" label="Organization Logo" aspect={1} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
@@ -132,7 +128,6 @@ export default function OrganizationForm() {
                         )}
                     />
 
-                    {/* Organization Type */}
                     <FormField
                         control={form.control}
                         name="organization_type"
@@ -170,9 +165,9 @@ export default function OrganizationForm() {
                                             <Button
                                                 variant="outline"
                                                 role="combobox"
-                                                className={cn("justify-between", !field.value[0] && "text-muted-foreground")}
+                                                className={cn("justify-between", !field.value && "text-muted-foreground")}
                                             >
-                                                {field.value[0] || "Select address"}
+                                                {field.value || "Select address"}
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </FormControl>
@@ -188,14 +183,14 @@ export default function OrganizationForm() {
                                                             value={address}
                                                             key={address}
                                                             onSelect={() => {
-                                                                form.setValue("organization_address", [address, ""])
+                                                                form.setValue("organization_address", address)
                                                                 setAddressOpen(false)
                                                             }}
                                                         >
                                                             <Check
                                                                 className={cn(
                                                                     "mr-2 h-4 w-4",
-                                                                    address === field.value[0] ? "opacity-100" : "opacity-0",
+                                                                    address === field.value ? "opacity-100" : "opacity-0"
                                                                 )}
                                                             />
                                                             {address}
@@ -212,7 +207,6 @@ export default function OrganizationForm() {
                         )}
                     />
 
-                    {/* Contact Number */}
                     <FormField
                         control={form.control}
                         name="contact_number"
@@ -242,14 +236,12 @@ export default function OrganizationForm() {
                                         buttonClass="!border-input !bg-background hover:!bg-accent"
                                         dropdownClass="!bg-background !border-input"
                                     />
-
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    {/* Email */}
                     <FormField
                         control={form.control}
                         name="email"
@@ -264,7 +256,6 @@ export default function OrganizationForm() {
                         )}
                     />
 
-                    {/* Password */}
                     <FormField
                         control={form.control}
                         name="password_str"
@@ -280,7 +271,6 @@ export default function OrganizationForm() {
                         )}
                     />
 
-                    {/* Confirm Password */}
                     <FormField
                         control={form.control}
                         name="confirm_password_str"
@@ -297,9 +287,9 @@ export default function OrganizationForm() {
                     />
                 </div>
 
-                {/* Submit Button - Full Width */}
                 <div>
-                    <Button type="submit" className="w-full" size="lg">
+                    <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                        {isLoading && <Loader2Icon className="animate-spin" />}
                         Register Organization
                     </Button>
                 </div>

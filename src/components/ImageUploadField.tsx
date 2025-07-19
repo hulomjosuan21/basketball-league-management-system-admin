@@ -22,12 +22,23 @@ import { ImageUp, Link } from "lucide-react"
 interface ImageUploadFieldProps {
   name: string
   label?: string
-  aspect?: number // e.g. 1 (square), 16/9, etc.
+  aspect?: number
   iconOnly?: boolean
+  allowUpload?: boolean
+  allowEmbed?: boolean
 }
 
-export function ImageUploadField({ name, label, aspect = 1, iconOnly }: ImageUploadFieldProps) {
-  const [mode, setMode] = useState<"upload" | "embed">("upload")
+export function ImageUploadField({
+  name,
+  label,
+  aspect = 1,
+  iconOnly,
+  allowUpload = true,
+  allowEmbed = true,
+}: ImageUploadFieldProps) {
+  const [mode, setMode] = useState<"upload" | "embed">(
+    allowUpload ? "upload" : "embed"
+  )
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -45,9 +56,7 @@ export function ImageUploadField({ name, label, aspect = 1, iconOnly }: ImageUpl
     setSelectedFile(file)
 
     const reader = new FileReader()
-    reader.onload = () => {
-      setImageSrc(reader.result as string)
-    }
+    reader.onload = () => setImageSrc(reader.result as string)
     reader.readAsDataURL(file)
   }, [])
 
@@ -106,7 +115,7 @@ export function ImageUploadField({ name, label, aspect = 1, iconOnly }: ImageUpl
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   {iconOnly ? (
-                    <Button variant="outline" size="icon">
+                    <Button variant="default" size="icon">
                       <ImageUp className="w-4 h-4" />
                     </Button>
                   ) : (
@@ -131,26 +140,32 @@ export function ImageUploadField({ name, label, aspect = 1, iconOnly }: ImageUpl
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent className="w-96 p-4 space-y-3" align="start">
-                  <div className="flex space-x-2">
-                    <Button
-                      type="button"
-                      variant={mode === "upload" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setMode("upload")}
-                    >
-                      Upload
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={mode === "embed" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setMode("embed")}
-                    >
-                      Embed link
-                    </Button>
-                  </div>
+                  {(allowUpload || allowEmbed) && (
+                    <div className="flex space-x-2">
+                      {allowUpload && (
+                        <Button
+                          type="button"
+                          variant={mode === "upload" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setMode("upload")}
+                        >
+                          Upload
+                        </Button>
+                      )}
+                      {allowEmbed && (
+                        <Button
+                          type="button"
+                          variant={mode === "embed" ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setMode("embed")}
+                        >
+                          Embed link
+                        </Button>
+                      )}
+                    </div>
+                  )}
 
-                  {mode === "upload" && (
+                  {mode === "upload" && allowUpload && (
                     <>
                       <Dropzone onDrop={onDrop} />
                       {isClient && imageSrc && (
@@ -171,7 +186,7 @@ export function ImageUploadField({ name, label, aspect = 1, iconOnly }: ImageUpl
                     </>
                   )}
 
-                  {mode === "embed" && (
+                  {mode === "embed" && allowEmbed && (
                     <>
                       <Input
                         placeholder="Paste image link"

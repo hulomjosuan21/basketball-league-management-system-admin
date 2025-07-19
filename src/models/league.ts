@@ -1,7 +1,15 @@
 export type LeagueType = {
-    readonly league_id: string,
-    league_title: string,
-    status: string
+    readonly league_id: string;
+    league_title: string;
+    status: string;
+    banner_url: string | null;
+}
+
+export type LeagueCategories = {
+    readonly category_id: string;
+    category_name: string;
+    entrance_fee_amount: number;
+    readonly league_id: string;
 }
 
 export type LeagueTeamSubmission = {
@@ -14,6 +22,7 @@ export type LeagueTeamSubmission = {
   status: string;
   email: string;
   contact_number: string;
+  category_id: string;
 };
 
 export type LeagueResourceType = {

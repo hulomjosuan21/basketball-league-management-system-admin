@@ -10,7 +10,11 @@ import { ImageUploadField } from "@/components/ImageUploadField"
 import z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, FormProvider, useWatch } from "react-hook-form"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useLeagueMeta } from "@/lib/stores/useLeagueMeta"
+import { useHandleErrorWithToast } from "@/lib/utils/handleError"
+import { updateLeagueBanner } from "@/services/league-service"
+import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   hero_image: z
@@ -27,6 +31,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 const DashboardHero = ({ admin }: { admin: LeagueAdminType }) => {
+  const { leagueMeta } = useLeagueMeta()
+  const handleError = useHandleErrorWithToast()
+  const [isLoading, setLoading] = useState(false)
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -49,9 +56,18 @@ const DashboardHero = ({ admin }: { admin: LeagueAdminType }) => {
     }
   }, [heroImage])
 
-  const onSubmit = (values: FormValues) => {
-    console.log("Auto-submitted image:", values.hero_image)
-    // You can persist here
+  const onSubmit = async (values: FormValues) => {
+    if (!values.hero_image || !leagueMeta || !leagueMeta.has_league || !leagueMeta.league_meta?.league_id) return;
+    setLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', values.hero_image)
+      await updateLeagueBanner({ league_id: leagueMeta.league_meta?.league_id, formData: formData })
+    } catch (e) {
+      handleError(e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const decorLines = (
@@ -87,7 +103,11 @@ const DashboardHero = ({ admin }: { admin: LeagueAdminType }) => {
             <form className="relative isolate px-2">
               <div className="relative z-10">
                 <Image
-                  src={previewUrl || defaultImage}
+                  src={
+                    previewUrl ||
+                    leagueMeta.league_meta?.banner_url ||
+                    defaultImage
+                  }
                   alt="Dashboard Visual"
                   fill={false}
                   width={1280}
@@ -96,9 +116,19 @@ const DashboardHero = ({ admin }: { admin: LeagueAdminType }) => {
                 />
                 <BorderBeam duration={8} size={200} borderWidth={2} />
 
-                <div className="absolute top-2 right-2 z-20">
-                  <ImageUploadField name="hero_image" iconOnly />
-                </div>
+
+                {
+                  leagueMeta.has_league && (
+                    <div className="absolute top-2 right-2 z-20">
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      ) : (
+                        <ImageUploadField name="hero_image" iconOnly allowEmbed={false} />
+                      )}
+                    </div>
+                  )
+                }
+
               </div>
 
               {decorLines}

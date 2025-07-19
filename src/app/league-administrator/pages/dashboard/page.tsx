@@ -12,22 +12,18 @@ import { useEffect } from "react"
 import { DashboardHero } from "./dashboard-hero"
 import { useLeagueAdmin } from "@/hooks/useLeagueAdmin"
 import { ErrorAlert, LoadingAlert, NoLeagueFoundAlert } from "@/components/alerts"
+import { useFetchLeagueMetaQuery } from "@/hooks/useFetchLeagueMetaQuery"
 
 export default function DashboardPage() {
     const { data: admin, isLoading: isAdminLoading, error: adminError } = useLeagueAdmin()
-    const { data, isLoading, error } = useQuery({
-        queryKey: ['league-meta'],
-        queryFn: fetchLeagueMeta,
-        staleTime: 5 * 60_000,
-    })
-
+    const { leagueMeta: leagueMetaFromQuery, isLeagueMetaLoading, leagueMetaError } = useFetchLeagueMetaQuery()
     const { leagueMeta, setLeagueMeta } = useLeagueMeta()
 
     useEffect(() => {
-        if (data) {
-            setLeagueMeta(data)
+        if (leagueMetaFromQuery) {
+            setLeagueMeta(leagueMetaFromQuery)
         }
-    }, [data, setLeagueMeta])
+    }, [leagueMetaFromQuery, setLeagueMeta])
 
     const header = (
         <header className="sticky top-0 z-10 bg-background border-b flex items-center gap-2 py-1">
@@ -49,13 +45,13 @@ export default function DashboardPage() {
                 {header}
 
                 <div className="flex flex-col gap-4 p-4">
-                    {isLoading && <LoadingAlert title={"Fetching League Meta..."} description={"Please wait while we load the league information."} />}
+                    {isLeagueMetaLoading && <LoadingAlert title={"Fetching League Meta..."} description={"Please wait while we load the league information."} />}
 
-                    {error && <ErrorAlert errorMessage={`Failed to fetch league meta: ${error.message}`}/>}
+                    {leagueMetaError && <ErrorAlert errorMessage={`Failed to fetch league meta: ${leagueMetaError.message}`}/>}
 
                     {!leagueMeta && <NoLeagueFoundAlert/>}
 
-                    {!isLoading && !error && admin && !isAdminLoading && !adminError && <DashboardHero admin={admin} />}
+                    {!isLeagueMetaLoading && !leagueMetaError && admin && !isAdminLoading && !adminError && <DashboardHero admin={admin} />}
 
                     <section className="w-full">
                         <span className="font-simibold text-md text-center">Recent</span>

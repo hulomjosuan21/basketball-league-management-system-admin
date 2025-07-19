@@ -20,12 +20,12 @@ import { usePaymentSheetStore } from "./store"
 import { useHandleErrorWithToast } from "@/lib/utils/handleError"
 import { LeagueTeamSubmission } from "@/models/league"
 import { updateLeagueTeam } from "@/services/league-service"
-import { useLeagueTeam } from "@/hooks/useLeagueTeam"
 import { cn } from "@/lib/utils"
+import { useLeagueTeams } from "@/hooks/useLeagueTeam"
 
-export function PaymentSheet() {
+export function PaymentSheet({category_id}:{category_id:string}) {
   const { open, data, closeSheet } = usePaymentSheetStore()
-  const { refetchTeamResource } = useLeagueTeam()
+  const { refetchLeagueTeams } = useLeagueTeams(category_id)
 
   const [fields, setFields] = useState<Partial<LeagueTeamSubmission>>({})
   const [adjustAmount, setAdjustAmount] = useState<number>(0)
@@ -63,7 +63,7 @@ export function PaymentSheet() {
           amount_paid: liveAmount,
         },
       })
-      await refetchTeamResource()
+      await refetchLeagueTeams()
       toast.success(response.message)
       setFields({})
       setLiveAmount(0)

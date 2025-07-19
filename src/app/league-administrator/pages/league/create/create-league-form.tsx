@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import { LeagueMeta, useLeagueMeta } from "@/lib/stores/useLeagueMeta";
 import dynamic from "next/dynamic";
 import { RichTextEditorField } from "@/components/RichTextFormEditor";
+import { useFetchLeagueMetaQuery } from "@/hooks/useFetchLeagueMetaQuery";
+import {leaguTestData} from "@/data/jsons/league-data"
 const ImageUploadField = dynamic(() => import("@/components/ImageUploadField").then(m => m.ImageUploadField), {
     ssr: false
 })
@@ -85,6 +87,7 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
     const handleError = useHandleErrorWithToast()
     const { updateLeagueMeta } = useLeagueMeta()
     const [isLoading, setIsLoading] = useState(false)
+    const {refetchLeagueMeta} = useFetchLeagueMetaQuery()
 
     const form = useForm<CreateLeagueFormValues>({
         resolver: zodResolver(schema),
@@ -95,8 +98,8 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
             registration_deadline: undefined,
             opening_date: undefined,
             start_date: undefined,
-            league_description: ``,
-            league_rules: "",
+            league_description: leaguTestData.description,
+            league_rules: leaguTestData.rules,
             categories: [],
         },
     });
@@ -117,6 +120,7 @@ export default function CreateLeagueForm({ hasLeague }: CreateLeagueFormProps) {
             formData.append("banner_image", values.league_banner);
 
             const response = await createNewLeague(formData);
+            await refetchLeagueMeta()
             toast.success(response.message)
             updateLeagueMeta({ has_league: true })
             form.reset()

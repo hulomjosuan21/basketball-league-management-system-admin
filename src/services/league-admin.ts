@@ -16,3 +16,11 @@ export async function fetchLeagueAdmin() {
 
     return apiResponse.payload?.entity
 }
+
+export async function registerLeagueAdmin(formData: FormData) {
+    const response = await axiosClient.client.post(`/entity/create-new/league-administrator`, formData)
+
+    const apiResponse = ApiResponse.fromJsonNoPayload<void>(response.data)
+
+    return apiResponse.toJSON()
+}

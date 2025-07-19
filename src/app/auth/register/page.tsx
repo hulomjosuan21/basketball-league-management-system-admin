@@ -1,6 +1,5 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import OrganizationForm from "./register-form";
-import RegisterForm from "./register-form";
 import image1 from "../../../../assets/images/image-1.jpg";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,7 +23,7 @@ export default function RegisterPage() {
                             Login
                         </Link>
                     </div>
-                    <RegisterForm />
+                    <OrganizationForm />
                     <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
                         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
                         and <Link href="#">Privacy Policy</Link>.

@@ -17,7 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import leagueCategories from "@/data/jsons/league_categories.json";
 import { RichTextField } from "@/components/RichTextEditor";
-
+import {leaguTestData} from "@/data/jsons/league-data"
 interface CategoryForCreation {
   category_name: string;
   category_format: string;
@@ -44,7 +44,7 @@ export function LeagueCategorySelector({ field, error }: Props) {
     if (!isAlreadySelected(name)) {
       const newCategory: CategoryForCreation = {
         category_name: name,
-        category_format: "",
+        category_format: leaguTestData.format,
         max_team: 0,
         entrance_fee_amount: 0,
       };

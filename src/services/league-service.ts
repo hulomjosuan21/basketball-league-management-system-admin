@@ -7,7 +7,7 @@ import axiosClient from "@/lib/axiosClient";
 import { TokenMissingError } from "@/lib/errors";
 import { logout } from "@/lib/serverLogout";
 import { LeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { LeagueResourceType, LeagueTeamSubmission, LeagueType } from "@/models/league";
+import { LeagueCategories, LeagueResourceType, LeagueTeamSubmission, LeagueType } from "@/models/league";
 import { MatchTeamInfo } from "@/models/match";
 
 export async function createNewLeague(formData: FormData) {
@@ -67,9 +67,8 @@ export async function fetchLeagueMeta(): Promise<LeagueMeta> {
   }
 }
 
-export async function fetchLeagueTeams(league_id?: string) {
-  if (!league_id) throw new Error("No found league!")
-  const response = await axiosClient.client.get(`/league/league-team?league_id=${league_id}&category_id=category-7141d300-c8e0-4edb-8421-63f67fb52b5b`);
+export async function fetchLeagueTeams(league_id: string, category_id: string) {
+  const response = await axiosClient.client.get(`/league/league-team?league_id=${league_id}&category_id=${category_id}`);
 
   const apiResponse = ApiResponse.fromJson<LeagueTeamSubmission[]>(response.data);
 
@@ -96,4 +95,19 @@ export async function updateLeagueTeam({ league_team_id, fields }: { league_team
   const apiResponse = ApiResponse.fromJsonNoPayload<void>(response.data);
 
   return apiResponse.toJSON();
+}
+export async function updateLeagueBanner({ league_id, formData }: { league_id: string, formData: FormData }) {
+  const response = await axiosClient.client.patch(`/league/update/banner/${league_id}`, formData)
+
+  const apiResponse = ApiResponse.fromJsonNoPayload<void>(response.data);
+
+  return apiResponse.toJSON();
+}
+
+export async function fetchCurrentLeagueQueries(league_id: string) {
+  const response = await axiosClient.client.get(`/league/current/categories/${league_id}`)
+  const data = response.data;
+  const categories = data.redirect as LeagueCategories[];
+
+  return categories;
 }

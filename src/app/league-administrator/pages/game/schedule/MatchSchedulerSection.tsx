@@ -1,0 +1,217 @@
+'use client'
+
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectGroup, SelectLabel } from '@/components/ui/select'
+import { SelectTrigger } from '@/components/ui/select'
+import { SelectValue } from '@/components/ui/select'
+import { SelectContent } from '@/components/ui/select'
+import { SelectItem } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { Form } from '@/components/ui/form'
+import { FormField } from '@/components/ui/form'
+import { FormItem } from '@/components/ui/form'
+import { FormLabel } from '@/components/ui/form'
+import { FormControl } from '@/components/ui/form'
+import { FormMessage } from '@/components/ui/form'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { useLeagueResource } from '@/hooks/useLeagueResource'
+import { MultiSelect } from '@/components/MultiSelect'
+import { ErrorAlert, SmallLoadingAlert } from '@/components/alerts'
+import { useMatchTeamStore } from './matchTeamStore'
+
+const schema = z.object({
+    home_team_id: z.string().min(1, 'Select Home Team'),
+    away_team_id: z.string().min(1, 'Select Away Team'),
+    scheduled_date: z.string().min(1),
+    duration_minutes: z.coerce.number().min(1),
+    referees: z.array(z.string()).length(3, 'Select exactly 3 referees'),
+    court: z.string().min(1),
+    category: z.string().nullable(),
+    division: z.string().nullable(),
+    league_id: z.string().nullable(),
+    round_number: z.coerce.number().nullable(),
+    bracket_side: z.enum(['LEFT', 'RIGHT']),
+    bracket_position: z.string().nullable(),
+    match_notes: z.string().nullable(),
+})
+
+export default function MatchCreateForm() {
+    const { homeTeam, awayTeam } = useMatchTeamStore();
+    const form = useForm({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            home_team_id: '',
+            away_team_id: '',
+            scheduled_date: '',
+            duration_minutes: 40,
+            referees: [],
+            court: '',
+            category: null,
+            division: null,
+            league_id: null,
+            round_number: null,
+            bracket_side: 'LEFT',
+            bracket_position: null,
+            match_notes: '',
+        },
+    })
+
+    const {
+        leagueResource,
+        leagueResourceLoading,
+        leagueResourceError,
+    } = useLeagueResource()
+
+    const refereeOptions = leagueResource?.league_referees ?? []
+    const courtOptions = leagueResource?.league_courts ?? []
+
+    const onSubmit = (data: any) => {
+        console.log('Submitted Match:', data)
+    }
+
+    if (leagueResourceLoading) return <SmallLoadingAlert description='Loading...' />
+    if (leagueResourceError) return <ErrorAlert errorMessage='Error loading resources' />
+
+    return (
+        <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex flex-col gap-4 w-full"
+            >
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="scheduled_date"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Schedule Date</FormLabel>
+                                <FormControl>
+                                    <Input type="datetime-local" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="duration_minutes"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Duration (Minutes)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="court"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Select Court</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select a court" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectLabel>Current League Courts</SelectLabel>
+                                            {courtOptions.map((court) => (
+                                                <SelectItem key={court.court_name} value={court.court_name}>
+                                                    {court.court_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="referees"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Select 3 Referees</FormLabel>
+                                <MultiSelect
+                                    options={refereeOptions.map((ref) => ({
+                                        value: ref.referee_full_name,
+                                        label: ref.referee_full_name,
+                                    }))}
+                                    value={field.value || []}
+                                    onChange={field.onChange}
+                                    placeholder="Select referees"
+                                    maxSelected={3}
+                                    heading='Current League Referees'
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="match_notes"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                                <FormLabel>Match Notes</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="Any additional info..." {...field} value={field.value ?? ''} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <div className="md:col-span-3 flex items-center gap-4">
+                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40">
+                            <p className="font-semibold">Home Team</p>
+                            {homeTeam ? (
+                                <p className="mt-2 text-lg">{homeTeam.team_name} {homeTeam.league_team_id}</p>
+                            ) : (
+                                <p className="mt-2 text-muted-foreground text-sm">Not selected</p>
+                            )}
+                        </div>
+
+                        <div className="w-12 text-center font-bold text-lg text-muted-foreground">V.S.</div>
+
+                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40">
+                            <p className="font-semibold">Away Team</p>
+                            {awayTeam ? (
+                                <p className="mt-2 text-lg">{awayTeam.team_name} {awayTeam.league_team_id}</p>
+                            ) : (
+                                <p className="mt-2 text-muted-foreground text-sm">Not selected</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="md:col-span-3">
+                        <Button type="submit" className="w-full">
+                            Schedule Match
+                        </Button>
+                    </div>
+                </div>
+            </form>
+        </Form>
+    )
+}

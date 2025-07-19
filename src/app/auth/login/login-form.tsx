@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { useHandleErrorWithToast } from "@/lib/utils/handleError"
+import { useLeagueAdmin } from "@/hooks/useLeagueAdmin"
+import { useFetchLeagueMetaQuery } from "@/hooks/useFetchLeagueMetaQuery"
 
 type LoginFormInputs = {
     email: string
@@ -24,7 +26,10 @@ export function LoginForm({
     ...props
 }: React.ComponentProps<"div">) {
     const router = useRouter()
+    const { refetch } = useLeagueAdmin()
+    const { refetchLeagueMeta } = useFetchLeagueMetaQuery()
     const handleError = useHandleErrorWithToast()
+
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>()
     const [isLoggingIn, setIsLoggingIn] = useState(false)
 
@@ -35,13 +40,17 @@ export function LoginForm({
         formData.append("password_str", data.password_str)
         try {
             const res = await login(formData)
+            await Promise.all([
+                refetchLeagueMeta(),
+                refetch()
+            ])
 
-            if(res.status && res.redirect) {
+            if (res.status && res.redirect) {
                 router.push(res.redirect)
             }
-        } catch(e) {
+        } catch (e) {
             handleError(e)
-        }finally {
+        } finally {
             setIsLoggingIn(false)
         }
     }
@@ -63,7 +72,7 @@ export function LoginForm({
                                     disabled={isLoggingIn}
                                     type="email"
                                     placeholder="m@example.com"
-                                    value={"noahboat231@gmail.com"}
+                                    defaultValue={"noahboat231@gmail.com"}
                                     {...register("email", { required: true })}
                                 />
                             </div>
@@ -77,7 +86,7 @@ export function LoginForm({
                                         Forgot your password?
                                     </Link>
                                 </div>
-                                <Input disabled={isLoggingIn} type="password" {...register("password_str", { required: true })} value={'password123'}/>
+                                <Input disabled={isLoggingIn} type="password" {...register("password_str", { required: true })} defaultValue={'password123'} />
                             </div>
                             <Button type="submit" className="w-full" disabled={isLoggingIn}>
                                 {isLoggingIn && <Loader2 className="animate-spin text-muted-foreground" />}

@@ -1,28 +1,36 @@
-import { useLeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { fetchLeagueTeams } from "@/services/league-service";
-import { useQuery } from "@tanstack/react-query";
+import { useLeagueMeta } from '@/lib/stores/useLeagueMeta'
+import { LeagueTeamSubmission } from '@/models/league'
+import { fetchLeagueTeams } from '@/services/league-service'
+import { useQuery } from '@tanstack/react-query'
 
-export function useLeagueTeam() {
-  const { leagueMeta } = useLeagueMeta(); // i am accessing some it in here so for now make it a string in river pud
+export function useLeagueTeams(category_id?: string) {
+  const { leagueMeta } = useLeagueMeta()
+  const league_id = leagueMeta.league_meta?.league_id
 
-  const query = useQuery({
-    queryKey: ['league-teams', leagueMeta.league_meta?.league_id],
-    queryFn: () => fetchLeagueTeams(leagueMeta.league_meta?.league_id),
-    
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
+  // 👉 Early return if no category_id
+  if (!category_id || !league_id) {
+    return {
+      leagueTeams: [],
+      leagueTeamsLoading: false,
+      leagueTeamsError: null,
+      refetchLeagueTeams: () => { },
+    }
+  }
 
-    enabled: !!leagueMeta.league_meta?.league_id,
-  });
+  const query = useQuery<LeagueTeamSubmission[] | undefined, Error>({
+    queryKey: ['league-teams', league_id, category_id],
+    queryFn: () => fetchLeagueTeams(league_id, category_id),
+    enabled: true,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
 
   return {
-    leagueMeta,
-    leagueTeam: query.data,
-    leagueTeamLoading: query.isLoading,
-    leagueTeamError: query.error,
-    refetchTeamResource: query.refetch,
-  };
+    leagueTeams: query.data ?? [],
+    leagueTeamsLoading: query.isLoading,
+    leagueTeamsError: query.error,
+    refetchLeagueTeams: query.refetch,
+  }
 }

@@ -14,11 +14,11 @@ export const LoadingAlert = ({title, description}:{title: string, description: s
 )
 
 export const SmallLoadingAlert = ({ description }: { description: string }) => (
-  <Alert className="flex items-center gap-2 p-1 h-8 text-sm">
-    <Loader2Icon className="h-3 w-3 animate-spin text-muted-foreground" />
-    <AlertDescription className="p-0 m-0 leading-none">{description}</AlertDescription>
+  <Alert className="flex items-center h-8 px-2 py-1 text-sm space-x-2">
+    <Loader2Icon className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+    <AlertDescription className="leading-none m-0">{description}</AlertDescription>
   </Alert>
-);
+)
 
 export const ErrorAlert = ({ errorMessage }: { errorMessage: string }) => (
     <Alert variant="destructive">
