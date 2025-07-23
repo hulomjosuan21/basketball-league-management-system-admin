@@ -25,15 +25,6 @@ export type LeagueTeamSubmission = {
   category_id: string;
 };
 
-export type MatchTeam = {
-    readonly category_id: string;
-    readonly league_team_id: string;
-    status: string;
-    readonly team_id: string;
-    team_logo_url?: string;
-    team_name: string;
-}
-
 export type LeagueResourceType = {
   league_resource_id: string
   league_id: string

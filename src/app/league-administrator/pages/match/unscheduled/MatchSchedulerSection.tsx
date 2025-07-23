@@ -28,9 +28,15 @@ import { Label } from '@/components/ui/label'
 import { useLeagueResource } from '@/hooks/useLeagueResource'
 import { MultiSelect } from '@/components/MultiSelect'
 import { ErrorAlert, SmallLoadingAlert } from '@/components/alerts'
-import { useMatchTeamStore } from './matchTeamStore'
-import { MatchTeam } from '@/models/league'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useToMatchTeamStore } from './matchTeamStore'
+import { MatchTeamType, MatchType } from '@/models/match/match-types'
+import { useHandleErrorWithToast } from '@/lib/utils/handleError'
+import { useState } from 'react'
+import { scheduleMatch } from '@/services/match-service'
+import { toast } from 'sonner'
+import { Loader2Icon } from 'lucide-react'
+import { useMatch } from '@/hooks/userMatchQueries'
 
 const formSchema = z.object({
     scheduled_date: z.string().min(1),
@@ -41,7 +47,9 @@ const formSchema = z.object({
 })
 
 export default function MatchCreateForm() {
-    const { homeTeam, awayTeam } = useMatchTeamStore();
+    const { match, resetMatch } = useToMatchTeamStore();
+    const handleError = useHandleErrorWithToast()
+    const [isProcessing, setProcess] = useState(false)
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -61,15 +69,43 @@ export default function MatchCreateForm() {
 
     const refereeOptions = leagueResource?.league_referees ?? []
     const courtOptions = leagueResource?.league_courts ?? []
+    const { matchRefetch } = useMatch({ league_id: match?.league_id, division_id: match?.division_id, status: match?.status })
 
-    const onSubmit = (data: z.infer<typeof formSchema>) => {
-        console.log('Submitted Match:', data)
+    const onSubmit = async (d: z.infer<typeof formSchema>) => {
+        const data: Partial<MatchType> = {
+            match_id: match?.match_id,
+            scheduled_date: new Date(d.scheduled_date).toISOString(),
+            referees: d.referees,
+            court: d.court,
+        }
+        if (d.match_notes) {
+            data.match_notes = d.match_notes
+        }
+        if (d.duration_minutes) {
+            data.duration_minutes = d.duration_minutes
+        }
+        setProcess(true)
+        try {
+            const response = await scheduleMatch(data)
+
+            await matchRefetch()
+            if (response.status && response.message) {
+                toast.success(response.message)
+                resetMatch()
+                form.reset()
+            }
+        } catch (e) {
+            handleError(e)
+        } finally {
+            setProcess(false)
+        }
+        console.log('Data: ', JSON.stringify(data, null, 2))
     }
 
     if (leagueResourceLoading) return <SmallLoadingAlert description='Loading...' />
     if (leagueResourceError) return <ErrorAlert errorMessage='Error loading resources' />
 
-    const teamCard = (t: MatchTeam) => (
+    const teamCard = (t: MatchTeamType) => (
         (
             <div className="flex items-center gap-3 justify-center">
                 <Avatar className="h-10 w-10 rounded-sm overflow-hidde">
@@ -187,8 +223,8 @@ export default function MatchCreateForm() {
                     <div className="md:col-span-3 flex items-center gap-4">
                         <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
                             <p className="font-semibold mb-2">Home Team</p>
-                            {homeTeam ? (
-                                teamCard(homeTeam)
+                            {match?.home_team ? (
+                                teamCard(match.home_team)
                             ) : (
                                 <p className="text-muted-foreground text-sm">Not selected</p>
                             )}
@@ -198,8 +234,8 @@ export default function MatchCreateForm() {
 
                         <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
                             <p className="font-semibold mb-2">Away Team</p>
-                            {awayTeam ? (
-                                teamCard(awayTeam)
+                            {match?.away_team ? (
+                                teamCard(match.away_team)
                             ) : (
                                 <p className="text-muted-foreground text-sm">Not selected</p>
                             )}
@@ -207,7 +243,8 @@ export default function MatchCreateForm() {
                     </div>
 
                     <div className="md:col-span-3">
-                        <Button type="submit" className="w-full">
+                        <Button type="submit" className="w-full" disabled={isProcessing}>
+                            {isProcessing && <Loader2Icon className="animate-spin" />}
                             Schedule Match
                         </Button>
                     </div>

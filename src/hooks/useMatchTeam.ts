@@ -1,5 +1,5 @@
 import { useLeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { MatchTeam } from "@/models/league";
+import { MatchTeam } from "@/models/match";
 import { fetchMatchTeamsByCategories } from "@/services/league-service";
 import { useQuery } from "@tanstack/react-query";
 
@@ -33,3 +33,4 @@ export function useMatchTeams(category_id: string) {
     refetchMatchTeams: query.refetch,
   }
 }
+

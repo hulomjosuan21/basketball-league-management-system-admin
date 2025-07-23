@@ -18,6 +18,7 @@ export function useLeagueCategories() {
   })
 
   return {
+    leagueMeta: leagueMeta,
     leagueCategories: query.data ?? [],
     leagueCategoriesLoading: query.isLoading,
     leagueCategoriesError: query.error,

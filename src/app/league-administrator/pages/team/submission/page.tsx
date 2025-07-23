@@ -15,6 +15,7 @@ export default function TeamSubmissionPage() {
     leagueCategories,
     leagueCategoriesLoading,
     leagueCategoriesError,
+    leagueMeta
   } = useLeagueCategories()
 
   const header = (
@@ -53,9 +54,10 @@ export default function TeamSubmissionPage() {
           {leagueCategoriesLoading && (
             <SmallLoadingAlert description="Loading categories..." />
           )}
-
           {!leagueCategoriesLoading && leagueCategories.length === 0 && (<ErrorAlert errorMessage='No categories found for this league.' />)}
-
+          {(leagueMeta && leagueMeta.has_league) && <code className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-xs">
+            @league/{leagueMeta.league_meta?.league_title}/divisions/team/submissions
+          </code>}
           {leagueCategories.length > 0 && (
             <Tabs
               key={leagueCategories.map((c) => c.category_id).join('-')}
@@ -72,7 +74,7 @@ export default function TeamSubmissionPage() {
                   </TabsTrigger>
                 ))}
               </TabsList>
-                <Separator className='mb-2'/>
+              <Separator />
               {leagueCategories.map((category) => (
                 <TabsContent
                   key={category.category_id}

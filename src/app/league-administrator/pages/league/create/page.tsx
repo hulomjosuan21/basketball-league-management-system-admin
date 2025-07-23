@@ -52,7 +52,7 @@ export default function CreateLeaguePage() {
                     </>
                     }
 
-                    {leagueMeta.has_league && (
+                    {!leagueMeta.has_league && (
                         <InfoAlert title="Action Not Allowed" description="You cannot create a new league until the current league is finished."/>
                     )}
 

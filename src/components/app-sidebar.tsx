@@ -17,6 +17,8 @@ import {
     Settings,
     CalendarCheck,
     FileBox,
+    ChevronsLeftRightEllipsis,
+    CalendarArrowUp
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -115,10 +117,20 @@ const data = {
             ],
         }
     ],
-    game: [
+    match: [
+        {
+            title: "Generate Matchups",
+            url: "/league-administrator/pages/match/generate-matchup",
+            icon: ChevronsLeftRightEllipsis,
+        },
         {
             title: "Set Schedule",
-            url: "/league-administrator/pages/game/schedule",
+            url: "/league-administrator/pages/match/unscheduled",
+            icon: CalendarArrowUp
+        },
+                {
+            title: "Scheduled",
+            url: "/league-administrator/pages/match/scheduled",
             icon: CalendarCheck,
         },
     ],
@@ -177,7 +189,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <>
                             <NavMain label="Platform" items={data.platform} />
                             <NavMain label="League" items={data.league} />
-                            <NavMain label="Game" items={data.game} />
+                            <NavMain label="Match" items={data.match} />
                         </>
                     )}
                     
