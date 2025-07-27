@@ -116,3 +116,34 @@ export interface MatchType {
   created_at: string;
   updated_at: string;
 }
+
+export enum FormatType {
+  ROUND_ROBIN = "Round Robin",
+  KNOCKOUT = "Knockout",
+  DOUBLE_ELIMINATION = "Double Elimination"
+}
+
+export interface MatchStagingType {
+  stage_id: string;
+
+  league_id: string;
+  division_id: string;
+  division: DivisionType;
+
+  category: MatchCategory;
+  pairing_method: PairingMethod;
+  format_type: FormatType;
+
+  is_active: boolean;
+  is_completed: boolean;
+
+  top_n_teams: number | null;
+  auto_generate: boolean;
+  vs_teams_generated: boolean;
+
+  match_options: GenerateOptions;
+  created_by: string;
+
+  created_at: string;
+  updated_at: string;
+}

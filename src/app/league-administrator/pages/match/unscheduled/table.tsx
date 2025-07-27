@@ -2,29 +2,24 @@
 
 import {
     ColumnDef,
-    ColumnFiltersState,
-    flexRender,
+    SortingState,
     getCoreRowModel,
-    getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
-    SortingState,
     useReactTable,
     VisibilityState,
+    flexRender,
 } from "@tanstack/react-table"
-import { useEffect, useMemo, useState } from "react"
-import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, RefreshCw } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import {
     Table,
     TableBody,
@@ -33,17 +28,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { LeagueTeamSubmission } from "@/models/league"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
-import { useLeagueTeams } from "@/hooks/useLeagueTeam"
-import { useHandleErrorWithToast } from "@/lib/utils/handleError"
-import { updateLeagueTeam } from "@/services/league-service"
-import { MatchStatus, MatchType } from "@/models/match/match-types"
-import { useLeagueMeta } from "@/lib/stores/useLeagueMeta"
-import { useMatch } from "@/hooks/userMatchQueries"
-import { Badge } from "@/components/ui/badge"
-import { useToMatchTeamStore } from "./matchTeamStore"
+import { MatchType } from "@/models/match/match-types"
+import { usePersistentMatchStore } from "./matchTeamStore"
 
 type ColumnProps = {
     handleUpdate: () => void
@@ -99,13 +85,13 @@ export const columns = ({
             accessorKey: "scheduled_date",
             header: "Scheduled Date",
             cell: ({ row }) => {
-                const match = row.original as MatchType
-                const scheduledDate = match.scheduled_date
-                const {setMatch} = useToMatchTeamStore()
-                
+                const m = row.original as MatchType;
+                const scheduledDate = m.scheduled_date;
+                const { openSheet } = usePersistentMatchStore();
+
                 const handleSetTeam = () => {
-                    setMatch(match)
-                }
+                    openSheet(m);
+                };
 
                 if (!scheduledDate) {
                     return (
@@ -116,14 +102,14 @@ export const columns = ({
                         >
                             Set Schedule
                         </Button>
-                    )
+                    );
                 }
 
                 return (
                     <span className="text-sm">
                         {new Date(scheduledDate).toLocaleString()}
                     </span>
-                )
+                );
             }
         },
         {
@@ -141,123 +127,63 @@ export const columns = ({
         {
             id: "actions",
             enableHiding: false,
-            cell: ({ row }) => {
-                return (
-                    <div className="flex justify-end">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                )
-            },
+            cell: ({ row }) => (
+                <div className="flex justify-end">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {/* Add dropdown actions here if needed */}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            ),
         }
     ]
 
 type Props = {
-    value: string;
+    data: MatchType[];
+    isLoading: boolean;
 }
 
-export function UnscheduledMatchTable({ value }: Props) {
-    const { leagueMeta } = useLeagueMeta()
-    const league_id = leagueMeta.league_meta?.league_id;
-    const { match, matchLoading } = useMatch({ league_id: league_id, division_id: value, status: MatchStatus.UNSCHEDULED })
-
-    const handleRefresh = async () => {
-
-    }
-
-    const [updating, setUpdating] = useState<Record<string, boolean>>({})
+export function UnscheduledMatchTable({ data, isLoading }: Props) {
+    const [updating, setUpdating] = useState<Record<string, boolean>>({});
 
     const handleUpdate = async () => {
-
+        // handle update logic here
     }
 
-    const [sorting, setSorting] = useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = useState({})
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+    const [rowSelection, setRowSelection] = useState({});
 
     const table = useReactTable({
-        data: match,
+        data: data,
         columns: columns({ handleUpdate, updating }),
         onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
         state: {
             sorting,
-            columnFilters,
             columnVisibility,
             rowSelection,
         },
-    })
+    });
 
     useEffect(() => {
-        table.setPageSize(10)
-    }, [table])
+        table.setPageSize(10);
+    }, [table]);
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between py-4">
-                <Input
-                    placeholder="Filter team name..."
-                    value={(table.getColumn("team_name")?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
-                        table.getColumn("team_name")?.setFilterValue(event.target.value)
-                    }
-                    className="max-w-sm"
-                />
-
-                <div className="flex items-center gap-2">
-                    {/* <Button onClick={handleRefresh} size="sm" variant="secondary">
-                    <RefreshCw
-                        className={cn(
-                            "mr-1 h-4 w-4 transition-transform",
-                            isRefreshing && "animate-spin"
-                        )}
-                    />
-                    Refresh
-                </Button> */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
-                                Columns <ChevronDown />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())
-                                .map((column) => (
-                                    <DropdownMenuCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
-                                        }
-                                    >
-                                        {column.id}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </div>
-
-            <div className="rounded-md border">
+            <div className="rounded-md border mt-4">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -295,7 +221,7 @@ export function UnscheduledMatchTable({ value }: Props) {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
-                                    {matchLoading ? 'Loading...' : 'No Matches.'}
+                                    {isLoading ? 'Loading...' : 'No Matches.'}
                                 </TableCell>
                             </TableRow>
                         )}
@@ -305,8 +231,8 @@ export function UnscheduledMatchTable({ value }: Props) {
 
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="text-muted-foreground flex-1 text-sm">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
+                    {table.getSelectedRowModel().rows.length} of{" "}
+                    {table.getRowModel().rows.length} row(s) selected.
                 </div>
                 <div className="space-x-2">
                     <Button
@@ -332,5 +258,5 @@ export function UnscheduledMatchTable({ value }: Props) {
                 </div>
             </div>
         </div>
-    )
+    );
 }

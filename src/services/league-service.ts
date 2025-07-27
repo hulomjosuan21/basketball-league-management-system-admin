@@ -1,12 +1,15 @@
 
 "use server"
+import { StagingGenerateOptionType } from "@/app/league-administrator/pages/match/staging-options/form";
+import { MatchTeamUnscheduledType } from "@/hooks/useMatchTeam";
 import { ApiResponse } from "@/lib/apiResponse";
 import { getLeagueAdminFromToken } from "@/lib/auth";
 import axiosClient from "@/lib/axiosClient";
 import { TokenMissingError } from "@/lib/errors";
 import { logout } from "@/lib/serverLogout";
 import { LeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { LeagueCategories, LeagueResourceType, LeagueTeamSubmission, LeagueType, MatchTeam } from "@/models/league";
+import { LeagueCategories, LeagueResourceType, LeagueTeamSubmission, LeagueType } from "@/models/league";
+import { MatchStagingType, MatchTeamType, MatchType } from "@/models/match/match-types";
 
 export async function createNewLeague(formData: FormData) {
   const admin = await getLeagueAdminFromToken();
@@ -94,6 +97,7 @@ export async function updateLeagueTeam({ league_team_id, fields }: { league_team
 
   return apiResponse.toJSON();
 }
+
 export async function updateLeagueBanner({ league_id, formData }: { league_id: string, formData: FormData }) {
   const response = await axiosClient.client.patch(`/league/update/banner/${league_id}`, formData)
 
@@ -108,8 +112,21 @@ export async function fetchCurrentLeagueQueries(league_id: string) {
   return apiResponse.payload;
 }
 
-export async function fetchMatchTeamsByCategories(league_id: string, category_id: string) {
-  const response = await axiosClient.client.get(`/match/teams/${league_id}/${category_id}`)
-  const apiResponse = ApiResponse.fromJson<MatchTeam[]>(response.data)
+export async function fetchStageMatch(options:MatchTeamUnscheduledType) {
+  const response = await axiosClient.client.post(`/match/all`,options)
+  const apiResponse = ApiResponse.fromJson<MatchType[]>(response.data)
   return apiResponse.payload;
+}
+
+export async function fetchAllLeagueStaging(league_id?: string) {
+  if (!league_id) throw new Error("No found league!")
+  const response = await axiosClient.client.get(`/match/all/stage/${league_id}`)
+  const apiResponse = ApiResponse.fromJson<MatchStagingType[]>(response.data)
+  return apiResponse.payload ?? [];
+}
+
+export async function generateStagingMatch(data:StagingGenerateOptionType) {
+  const response = await axiosClient.client.post(`/match/generate`,data)
+  const apiResponse = ApiResponse.fromJsonNoPayload<void>(response.data)
+  return apiResponse.toJSON();
 }

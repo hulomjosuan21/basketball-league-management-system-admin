@@ -18,7 +18,8 @@ import {
     CalendarCheck,
     FileBox,
     ChevronsLeftRightEllipsis,
-    CalendarArrowUp
+    CalendarArrowUp,
+    FlagTriangleRight
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
@@ -118,6 +119,11 @@ const data = {
         }
     ],
     match: [
+                {
+            title: "Staging Options",
+            url: "/league-administrator/pages/match/staging-options",
+            icon: FlagTriangleRight,
+        },
         {
             title: "Generate Matchups",
             url: "/league-administrator/pages/match/generate-matchup",

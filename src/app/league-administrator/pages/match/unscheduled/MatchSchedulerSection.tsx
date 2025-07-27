@@ -29,14 +29,13 @@ import { useLeagueResource } from '@/hooks/useLeagueResource'
 import { MultiSelect } from '@/components/MultiSelect'
 import { ErrorAlert, SmallLoadingAlert } from '@/components/alerts'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useToMatchTeamStore } from './matchTeamStore'
 import { MatchTeamType, MatchType } from '@/models/match/match-types'
 import { useHandleErrorWithToast } from '@/lib/utils/handleError'
 import { useState } from 'react'
 import { scheduleMatch } from '@/services/match-service'
 import { toast } from 'sonner'
 import { Loader2Icon } from 'lucide-react'
-import { useMatch } from '@/hooks/userMatchQueries'
+import { usePersistentMatchStore } from './matchTeamStore'
 
 const formSchema = z.object({
     scheduled_date: z.string().min(1),
@@ -47,7 +46,7 @@ const formSchema = z.object({
 })
 
 export default function MatchCreateForm() {
-    const { match, resetMatch } = useToMatchTeamStore();
+    const { match, resetMatch } = usePersistentMatchStore();
     const handleError = useHandleErrorWithToast()
     const [isProcessing, setProcess] = useState(false)
     const form = useForm({
@@ -69,7 +68,6 @@ export default function MatchCreateForm() {
 
     const refereeOptions = leagueResource?.league_referees ?? []
     const courtOptions = leagueResource?.league_courts ?? []
-    const { matchRefetch } = useMatch({ league_id: match?.league_id, division_id: match?.division_id, status: match?.status })
 
     const onSubmit = async (d: z.infer<typeof formSchema>) => {
         const data: Partial<MatchType> = {
@@ -88,7 +86,7 @@ export default function MatchCreateForm() {
         try {
             const response = await scheduleMatch(data)
 
-            await matchRefetch()
+            // await matchRefetch()
             if (response.status && response.message) {
                 toast.success(response.message)
                 resetMatch()

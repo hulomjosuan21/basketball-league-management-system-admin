@@ -1,25 +1,23 @@
 import { useLeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { MatchTeam } from "@/models/match";
-import { fetchMatchTeamsByCategories } from "@/services/league-service";
+import { MatchTeamType, MatchType } from "@/models/match/match-types";
+import { fetchStageMatch } from "@/services/league-service";
 import { useQuery } from "@tanstack/react-query";
 
-export function useMatchTeams(category_id: string) {
-    const { leagueMeta } = useLeagueMeta();
-    const league_id = leagueMeta.league_meta?.league_id
+export type MatchTeamUnscheduledType = {
+    stage_id: string;
+    category_id: string;
+    status?: string;
+}
+export function useMatchTeams({stage_id, category_id, status = "Unscheduled"}:MatchTeamUnscheduledType) {
+  const options:MatchTeamUnscheduledType = {
+    stage_id,
+    category_id,
+    status
+  }
 
-    if (!category_id || !league_id) {
-        return {
-            matchTeams: [],
-            matchTeamsLoading: false,
-            matchTeamsError: null,
-            refetchMatchTeams: () => { },
-        }
-    }
-
-  const query = useQuery<MatchTeam[] | undefined, Error>({
-    queryKey: ['match-teams-by-category', league_id, category_id],
-    queryFn: () => fetchMatchTeamsByCategories(league_id, category_id),
-    enabled: !!league_id,
+  const query = useQuery<MatchType[] | undefined, Error>({
+    queryKey: ['match-teams-by-category', stage_id, category_id],
+    queryFn: () => fetchStageMatch(options),
     staleTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -33,4 +31,3 @@ export function useMatchTeams(category_id: string) {
     refetchMatchTeams: query.refetch,
   }
 }
-

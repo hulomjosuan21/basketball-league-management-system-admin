@@ -1,23 +1,31 @@
-import { MatchType } from '@/models/match/match-types'
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+import { MatchType } from "@/models/match/match-types"
 
-interface ToMatchTeamStore {
+type MatchStore = {
   match?: MatchType
-  setMatch: (match: MatchType) => void
   resetMatch: () => void
+
+  open: boolean
+  data: MatchType | null
+  openSheet: (data: MatchType) => void
+  closeSheet: () => void
 }
 
-export const useToMatchTeamStore = create<ToMatchTeamStore>()(
+export const usePersistentMatchStore = create<MatchStore>()(
   persist(
     (set) => ({
       match: undefined,
-      setMatch: (match) => set({ match }),
       resetMatch: () => set({ match: undefined }),
+
+      open: false,
+      data: null,
+      openSheet: (data) => set({ open: true, data }),
+      closeSheet: () => set({ open: false, data: null }),
     }),
     {
-      name: 'to-match-team-storage',
-      partialize: (state) => ({ match: state.match }),
+      name: "match-store",
+      partialize: (state) => ({ match: state.match }), // only persist match
     }
   )
 )
