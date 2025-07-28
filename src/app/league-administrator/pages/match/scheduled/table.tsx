@@ -18,6 +18,7 @@ import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
+    DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -29,7 +30,8 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { MatchType } from "@/models/match/match-types"
-import { usePersistentMatchStore } from "./matchTeamStore"
+import { useRouter } from "next/navigation"
+import { usePersistentStartMatchStore } from "../start-match/store"
 
 type ColumnProps = {
     handleUpdate: () => void
@@ -88,35 +90,20 @@ export const columns = ({
         },
         {
             accessorKey: "scheduled_date",
-            header: "Scheduled Date",
-            cell: ({ row }) => {
-                const m = row.original as MatchType;
-                const scheduledDate = m.scheduled_date;
-                const { openSheet, setStage } = usePersistentMatchStore();
-
-                const handleSetTeam = () => {
-                    openSheet(m);
-                    setStage(stage.stage_id, stage.division_id);
-                };
-
-                if (!scheduledDate) {
-                    return (
-                        <Button
-                            size="sm"
-                            className="text-xs px-2 py-0"
-                            onClick={handleSetTeam}
-                        >
-                            Set Schedule
-                        </Button>
-                    );
-                }
-
-                return (
-                    <span className="text-sm">
-                        {new Date(scheduledDate).toLocaleString()}
-                    </span>
-                );
-            }
+            header: "Scheduled Date & Time",
+            cell: ({ getValue }) => {
+                const value = getValue() as string | Date
+                const date = new Date(value)
+                return date.toLocaleString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                    timeZone: "Asia/Manila",
+                })
+            },
         },
         {
             accessorKey: 'category',
@@ -133,21 +120,30 @@ export const columns = ({
         {
             id: "actions",
             enableHiding: false,
-            cell: ({ row }) => (
-                <div className="flex justify-end">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {/* Add dropdown actions here if needed */}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            ),
+            cell: ({ row }) => {
+                const router = useRouter()
+                const handleGotoStartMatchPage = () => {
+                    setData(row.original)
+                    router.push(`/league-administrator/pages/match/start-match`)
+                }
+                const { setData } = usePersistentStartMatchStore()
+
+                return (
+                    <div className="flex justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleGotoStartMatchPage}>Start Match</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                )
+            },
         }
     ]
 
@@ -160,7 +156,7 @@ type Props = {
     }
 }
 
-export function UnscheduledMatchTable({ data, isLoading, stage }: Props) {
+export function ScheduledMatchTable({ data, isLoading, stage }: Props) {
     const [updating, setUpdating] = useState<Record<string, boolean>>({});
 
     const handleUpdate = async () => {

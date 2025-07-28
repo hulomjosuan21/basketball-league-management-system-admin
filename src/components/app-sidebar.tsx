@@ -125,11 +125,6 @@ const data = {
             icon: FlagTriangleRight,
         },
         {
-            title: "Generate Matchups",
-            url: "/league-administrator/pages/match/generate-matchup",
-            icon: ChevronsLeftRightEllipsis,
-        },
-        {
             title: "Set Schedule",
             url: "/league-administrator/pages/match/unscheduled",
             icon: CalendarArrowUp

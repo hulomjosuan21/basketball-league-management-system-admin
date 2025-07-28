@@ -7,6 +7,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet"
 import { usePersistentMatchStore } from "./matchTeamStore";
+import MatchCreateForm from "./MatchSchedulerSection";
 
 export default function UnscheduledMatchSheet() {
     const {
@@ -16,14 +17,17 @@ export default function UnscheduledMatchSheet() {
 
     return (
         <Sheet open={open} onOpenChange={closeSheet}>
-            <SheetContent>
+            <SheetContent side="bottom">
                 <SheetHeader>
-                    <SheetTitle>Are you absolutely sure?</SheetTitle>
+                    <SheetTitle>Schedule Match</SheetTitle>
                     <SheetDescription>
-                        This action cannot be undone. This will permanently delete your account
-                        and remove your data from our servers.
+                        Set up the date, time, and other details for this match.
                     </SheetDescription>
                 </SheetHeader>
+
+                <div className="flex justify-center p-4">
+                    <MatchCreateForm/>
+                </div>
             </SheetContent>
         </Sheet>
     );

@@ -29,13 +29,14 @@ import { useLeagueResource } from '@/hooks/useLeagueResource'
 import { MultiSelect } from '@/components/MultiSelect'
 import { ErrorAlert, SmallLoadingAlert } from '@/components/alerts'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { MatchTeamType, MatchType } from '@/models/match/match-types'
+import { MatchStatus, MatchTeamType, MatchType } from '@/models/match/match-types'
 import { useHandleErrorWithToast } from '@/lib/utils/handleError'
 import { useState } from 'react'
 import { scheduleMatch } from '@/services/match-service'
 import { toast } from 'sonner'
 import { Loader2Icon } from 'lucide-react'
 import { usePersistentMatchStore } from './matchTeamStore'
+import { queryClient } from '@/lib/queryClient'
 
 const formSchema = z.object({
     scheduled_date: z.string().min(1),
@@ -46,7 +47,7 @@ const formSchema = z.object({
 })
 
 export default function MatchCreateForm() {
-    const { match, resetMatch } = usePersistentMatchStore();
+    const { data: match, closeSheet, stage } = usePersistentMatchStore();
     const handleError = useHandleErrorWithToast()
     const [isProcessing, setProcess] = useState(false)
     const form = useForm({
@@ -84,12 +85,17 @@ export default function MatchCreateForm() {
         }
         setProcess(true)
         try {
+            if(!stage.stage_id || !stage.division_id) {
+                throw new Error('Stage and Division must be selected before scheduling a match.')
+            }
             const response = await scheduleMatch(data)
 
-            // await matchRefetch()
+            await queryClient.refetchQueries({
+                queryKey: ['match-teams-by-category', stage.stage_id, stage.division_id, MatchStatus.UNSCHEDULED],
+            });
             if (response.status && response.message) {
                 toast.success(response.message)
-                resetMatch()
+                closeSheet()
                 form.reset()
             }
         } catch (e) {
@@ -97,7 +103,6 @@ export default function MatchCreateForm() {
         } finally {
             setProcess(false)
         }
-        console.log('Data: ', JSON.stringify(data, null, 2))
     }
 
     if (leagueResourceLoading) return <SmallLoadingAlert description='Loading...' />
@@ -119,135 +124,140 @@ export default function MatchCreateForm() {
     )
 
     return (
-        <Form {...form}>
-            <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="flex flex-col gap-4 w-full"
-            >
+        <>
+            {/* <pre>
+        {JSON.stringify(stage, null, 2)}
+       </pre> */}
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="flex flex-col gap-4 w-full"
+                >
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="scheduled_date"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Schedule Date</FormLabel>
-                                <FormControl>
-                                    <Input type="datetime-local" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="duration_minutes"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Duration (Minutes)</FormLabel>
-                                <FormControl>
-                                    <Input type="number" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="court"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Select Court</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="scheduled_date"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Schedule Date</FormLabel>
                                     <FormControl>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select a court" />
-                                        </SelectTrigger>
+                                        <Input type="datetime-local" {...field} />
                                     </FormControl>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Current League Courts</SelectLabel>
-                                            {courtOptions.map((court) => (
-                                                <SelectItem key={court.court_name} value={court.court_name}>
-                                                    {court.court_name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="referees"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Select 3 Referees</FormLabel>
-                                <MultiSelect
-                                    options={refereeOptions.map((ref) => ({
-                                        value: ref.referee_full_name,
-                                        label: ref.referee_full_name,
-                                    }))}
-                                    value={field.value || []}
-                                    onChange={field.onChange}
-                                    placeholder="Select referees"
-                                    maxSelected={3}
-                                    heading='Current League Referees'
-                                />
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="match_notes"
-                        render={({ field }) => (
-                            <FormItem className="md:col-span-2">
-                                <FormLabel>Match Notes</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder="Any additional info..." {...field} value={field.value ?? ''} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <div className="md:col-span-3 flex items-center gap-4">
-                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
-                            <p className="font-semibold mb-2">Home Team</p>
-                            {match?.home_team ? (
-                                teamCard(match.home_team)
-                            ) : (
-                                <p className="text-muted-foreground text-sm">Not selected</p>
+                                    <FormMessage />
+                                </FormItem>
                             )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="duration_minutes"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Duration (Minutes)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="court"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Select Court</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select a court" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectLabel>Current League Courts</SelectLabel>
+                                                {courtOptions.map((court) => (
+                                                    <SelectItem key={court.court_name} value={court.court_name}>
+                                                        {court.court_name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="referees"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Select 3 Referees</FormLabel>
+                                    <MultiSelect
+                                        options={refereeOptions.map((ref) => ({
+                                            value: ref.referee_full_name,
+                                            label: ref.referee_full_name,
+                                        }))}
+                                        value={field.value || []}
+                                        onChange={field.onChange}
+                                        placeholder="Select referees"
+                                        maxSelected={3}
+                                        heading='Current League Referees'
+                                    />
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="match_notes"
+                            render={({ field }) => (
+                                <FormItem className="md:col-span-2">
+                                    <FormLabel>Match Notes</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Any additional info..." {...field} value={field.value ?? ''} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="md:col-span-3 flex items-center gap-4">
+                            <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
+                                <p className="font-semibold mb-2">Home Team</p>
+                                {match?.home_team ? (
+                                    teamCard(match.home_team)
+                                ) : (
+                                    <p className="text-muted-foreground text-sm">Not selected</p>
+                                )}
+                            </div>
+
+                            <div className="w-12 text-center font-bold text-lg text-muted-foreground">V.S.</div>
+
+                            <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
+                                <p className="font-semibold mb-2">Away Team</p>
+                                {match?.away_team ? (
+                                    teamCard(match.away_team)
+                                ) : (
+                                    <p className="text-muted-foreground text-sm">Not selected</p>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="w-12 text-center font-bold text-lg text-muted-foreground">V.S.</div>
-
-                        <div className="flex-[1.5] border border-dashed rounded-lg p-4 min-h-[120px] text-center bg-muted/40 flex flex-col items-center justify-center">
-                            <p className="font-semibold mb-2">Away Team</p>
-                            {match?.away_team ? (
-                                teamCard(match.away_team)
-                            ) : (
-                                <p className="text-muted-foreground text-sm">Not selected</p>
-                            )}
+                        <div className="md:col-span-3">
+                            <Button type="submit" className="w-full" disabled={isProcessing}>
+                                {isProcessing && <Loader2Icon className="animate-spin" />}
+                                Schedule Match
+                            </Button>
                         </div>
                     </div>
-
-                    <div className="md:col-span-3">
-                        <Button type="submit" className="w-full" disabled={isProcessing}>
-                            {isProcessing && <Loader2Icon className="animate-spin" />}
-                            Schedule Match
-                        </Button>
-                    </div>
-                </div>
-            </form>
-        </Form>
+                </form>
+            </Form>
+        </>
     )
 }

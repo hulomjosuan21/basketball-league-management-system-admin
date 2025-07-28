@@ -1,14 +1,14 @@
 import { useLeagueMeta } from "@/lib/stores/useLeagueMeta";
-import { MatchTeamType, MatchType } from "@/models/match/match-types";
+import { MatchStatus, MatchTeamType, MatchType } from "@/models/match/match-types";
 import { fetchStageMatch } from "@/services/league-service";
 import { useQuery } from "@tanstack/react-query";
 
 export type MatchTeamUnscheduledType = {
     stage_id: string;
     category_id: string;
-    status?: string;
+    status?: MatchStatus;
 }
-export function useMatchTeams({stage_id, category_id, status = "Unscheduled"}:MatchTeamUnscheduledType) {
+export function useMatchTeams({stage_id, category_id, status = MatchStatus.UNSCHEDULED}:MatchTeamUnscheduledType) {
   const options:MatchTeamUnscheduledType = {
     stage_id,
     category_id,
@@ -16,7 +16,7 @@ export function useMatchTeams({stage_id, category_id, status = "Unscheduled"}:Ma
   }
 
   const query = useQuery<MatchType[] | undefined, Error>({
-    queryKey: ['match-teams-by-category', stage_id, category_id],
+    queryKey: ['match-teams-by-category', stage_id, category_id, status],
     queryFn: () => fetchStageMatch(options),
     staleTime: Infinity,
     refetchOnMount: false,
